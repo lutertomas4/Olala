@@ -96,7 +96,8 @@
 <!-- APP HEADER -->
 <header>
   <b><span id="h-icon">💇‍♀️</span> <span id="h-user">Salón & Nails</span></b>
-  <div style="display:flex; gap:8px; align-items:center;">
+  <div style="display:flex; gap:6px; align-items:center;">
+    <button class="btn-switch" style="background:#d1fae5 !important; color:#065f46 !important; font-weight:800;" onclick="descargarExcelHistoriasClinicas()" title="Descargar Fórmulas a Excel">📊 Excel</button>
     <button class="btn-switch" onclick="abrirConfigSupabase()" title="Configurar conexión en la nube y respaldos">⚡ Nube</button>
     <button class="btn-switch" onclick="abrirSelectorUsuario()">🔄 Salir</button>
   </div>
@@ -113,8 +114,11 @@
 
   <!-- ===== INICIO / JORNADA ===== -->
   <section id="s-inicio" class="on">
-    <div class="chips" id="per"></div>
-    <div id="inicioCont" style="margin-top:12px"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+      <div class="chips" id="per"></div>
+      <button class="mini" style="background:#087456 !important; color:#ffffff !important; font-weight:700;" onclick="descargarExcelHistoriasClinicas()">📊 Descargar Fórmulas (Excel)</button>
+    </div>
+    <div id="inicioCont" style="margin-top:10px"></div>
   </section>
 
   <!-- ===== CLIENTAS (Yamina) ===== -->
