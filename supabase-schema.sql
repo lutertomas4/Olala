@@ -1,5 +1,5 @@
 -- ==========================================================
--- SCHEMA SUPABASE PARA SALÓN & NAILS (Yamila, Katya, Gisel)
+-- SCHEMA SUPABASE PARA SALÓN & NAILS (Yamina, Katya, Gisel)
 -- ==========================================================
 -- Ejecutá todo este script en: Supabase -> SQL Editor -> New query -> Run
 
@@ -14,7 +14,7 @@ create table if not exists public.clientes (
   created_at timestamp with time zone default now()
 );
 
--- 2. TABLA DE ATENCIONES DE PELUQUERÍA / HISTORIA CLÍNICA CAPILAR (Yamila)
+-- 2. TABLA DE ATENCIONES DE PELUQUERÍA / HISTORIA CLÍNICA CAPILAR (Yamina)
 create table if not exists public.visitas_pelo (
   id bigint primary key default floor(extract(epoch from now()) * 1000)::bigint,
   cliente_id text references public.clientes(id) on delete set null,
@@ -41,7 +41,7 @@ create table if not exists public.turnos_unas (
   detalle text,
   monto numeric not null default 0,
   ganancia_chica numeric generated always as (round(monto * 0.60)) stored,  -- 60% que retiene la manicurista
-  comision_yamila numeric generated always as (round(monto * 0.40)) stored, -- 40% que entrega a Yamila
+  comision_yamila numeric generated always as (round(monto * 0.40)) stored, -- 40% que entrega a Yamina
   pago text default 'Efectivo',
   created_at timestamp with time zone default now()
 );
@@ -59,7 +59,7 @@ create table if not exists public.usuarios (
 -- Insertar usuarios por defecto si no existen
 insert into public.usuarios (usuario_key, nombre, rol, icono, color, pin)
 values 
-  ('yamila', 'Yamila', 'duena', '💇‍♀️', '#b84a7a', '1234'),
+  ('yamila', 'Yamina', 'duena', '💇‍♀️', '#b84a7a', '1234'),
   ('katya', 'Katya', 'manicurista', '💅', '#c026d3', '1111'),
   ('gisel', 'Gisel', 'manicurista', '✨', '#7c3aed', '2222')
 on conflict (usuario_key) do nothing;

@@ -78,7 +78,7 @@ const DB_API = {
     }
   },
 
-  // VISITAS PELUQUERÍA (Yamila)
+  // VISITAS PELUQUERÍA (Yamina)
   async getVisitas() {
     if (this.isOnline()) {
       const { data, error } = await supabaseClient.from('visitas_pelo').select('*').order('fecha', { ascending: false });

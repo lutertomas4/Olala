@@ -1,6 +1,6 @@
 # 💇‍♀️ Salón & Nails · Gestión Integral en Tiempo Real
 
-Aplicación web progresiva (PWA) para gestión de peluquería (Yamila) y manicuría en mesa compartida (Katya y Gisel).
+Aplicación web progresiva (PWA) para gestión de peluquería (Yamina) y manicuría en mesa compartida (Katya y Gisel).
 
 ---
 
@@ -69,13 +69,13 @@ Al abrir la app publicada en el celular o la compu:
 
 | Usuario | Rol | PIN por Defecto |
 | :--- | :--- | :--- |
-| **Yamila** | Dueña (Peluquería, cobro 100% propio y 40% comisión de uñas) | `1234` |
+| **Yamina** | Dueña (Peluquería, cobro 100% propio y 40% comisión de uñas) | `1234` |
 | **Katya** | Manicurista (Mesa 1, cobro directo 100%, retiene 60%, rinde 40%) | `1111` |
 | **Gisel** | Manicurista (Mesa 2, cobro directo 100%, retiene 60%, rinde 40%) | `2222` |
 
 ---
 
 ## 📱 Instalar como App en el Celular (PWA)
-En el celular de Yamila, Katya y Gisel:
+En el celular de Yamina, Katya y Gisel:
 - **Android (Chrome):** Abrir el enlace ➔ Tocar los 3 puntitos ➔ **"Agregar a la pantalla principal"** o **"Instalar aplicación"**.
 - **iPhone (Safari):** Abrir el enlace ➔ Tocar el botón Compartir (flechita hacia arriba) ➔ **"Agregar al inicio"**.

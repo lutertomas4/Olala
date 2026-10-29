@@ -19,11 +19,11 @@
     <h1>💇‍♀️ Salón & Nails</h1>
     <p>Seleccioná tu usuario para ingresar al sistema:</p>
     <div class="user-cards">
-      <!-- Yamila -->
-      <button class="user-btn" onclick="solicitarPin('yamila')">
+      <!-- Yamina -->
+      <button class="user-btn" onclick="solicitarPin('yamina')">
         <div class="user-avatar" style="background-color:#fce7f3; color:#b84a7a;">💇‍♀️</div>
         <div class="user-info">
-          <b>Yamila (Mamá)</b>
+          <b>Yamina (Mamá)</b>
           <span>Dueña · Peluquería & Rindes</span>
         </div>
         <span class="badge-role" style="background-color:#fce7f3; color:#b84a7a;">🔒 PIN 1234</span>
@@ -64,22 +64,27 @@
       <button class="btn" style="margin-top:0;" onclick="verificarPin()">Entrar</button>
     </div>
     <div class="pin-hint">
-      <strong>PINs de prueba:</strong> Yamila: <b>1234</b> · Katya: <b>1111</b> · Gisel: <b>2222</b>
+      <strong>PINs de prueba:</strong> Yamina: <b>1234</b> · Katya: <b>1111</b> · Gisel: <b>2222</b>
     </div>
   </div>
 </div>
 
-<!-- MODAL DE CONFIGURACIÓN DE SUPABASE -->
+<!-- MODAL DE CONFIGURACIÓN DE SUPABASE Y GOOGLE DRIVE -->
 <div id="modal-config-db">
   <div class="pin-box" style="max-width: 440px; text-align: left;">
-    <h3 style="margin-top:0;">⚡ Conectar Base de Datos (Supabase)</h3>
-    <p style="font-size:12px; color:var(--txt-muted);">Pegá los datos de tu proyecto de Supabase para tener sincronización en vivo entre todos los celulares:</p>
+    <h3 style="margin-top:0;">⚡ Conectar Nube & Respaldos</h3>
+    <p style="font-size:12px; color:var(--txt-muted);">Sincronización en vivo entre celulares y respaldo automático de fórmulas:</p>
     
-    <label>Project URL:</label>
+    <label>Project URL (Supabase):</label>
     <input id="supabase-url-input" placeholder="https://tu-proyecto.supabase.co">
 
-    <label>Anon Public Key:</label>
+    <label>Anon Public Key (Supabase):</label>
     <input id="supabase-key-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+
+    <hr style="border:0; border-top:1px dashed var(--border); margin:14px 0;">
+    <label style="color:#087456; font-weight:800;">📊 Respaldo Automático a Google Drive (Opcional):</label>
+    <p style="font-size:11px; color:var(--txt-muted); margin:2px 0 6px;">URL de la Web App de Apps Script para guardar una copia en vivo en Sheets:</p>
+    <input id="google-sheets-url-input" placeholder="https://script.google.com/macros/s/.../exec">
 
     <div class="pin-actions" style="margin-top:14px;">
       <button class="btn btn-sec" style="margin-top:0;" onclick="cerrarConfigSupabase()">Cancelar</button>
@@ -92,7 +97,7 @@
 <header>
   <b><span id="h-icon">💇‍♀️</span> <span id="h-user">Salón & Nails</span></b>
   <div style="display:flex; gap:8px; align-items:center;">
-    <button class="btn-switch" onclick="abrirConfigSupabase()" title="Configurar conexión en la nube">⚡ Nube</button>
+    <button class="btn-switch" onclick="abrirConfigSupabase()" title="Configurar conexión en la nube y respaldos">⚡ Nube</button>
     <button class="btn-switch" onclick="abrirSelectorUsuario()">🔄 Salir</button>
   </div>
 </header>
@@ -112,7 +117,7 @@
     <div id="inicioCont" style="margin-top:12px"></div>
   </section>
 
-  <!-- ===== CLIENTAS (Yamila) ===== -->
+  <!-- ===== CLIENTAS (Yamina) ===== -->
   <section id="s-clientas">
     <div id="perfil"></div>
     <div class="card">
@@ -131,16 +136,22 @@
       </details>
     </div>
     <div class="card">
-      <label>Buscar clienta:</label>
-      <input id="buscar" placeholder="🔍 Escribí un nombre o teléfono...">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label style="margin:0;">Buscar clienta:</label>
+        <button class="mini btn-sec" style="font-size:11px;" onclick="descargarExcelClientas()">📊 Exportar a Excel</button>
+      </div>
+      <input id="buscar" placeholder="🔍 Escribí un nombre o teléfono..." style="margin-top:8px;">
       <div id="listaClientas" style="margin-top:10px"></div>
     </div>
   </section>
 
-  <!-- ===== VISITA PELUQUERÍA (Yamila - Ficha Técnica Dinámica) ===== -->
+  <!-- ===== VISITA PELUQUERÍA (Yamina - Ficha Técnica Dinámica) ===== -->
   <section id="s-visita">
     <div class="card">
-      <label>Clienta en el salón</label>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <label style="margin:0;">Clienta en el salón</label>
+        <button class="mini" style="background:#087456; color:#ffffff; font-weight:700;" onclick="descargarExcelHistoriasClinicas()">📊 Descargar Fórmulas a Excel</button>
+      </div>
       <input id="v_buscar" placeholder="🔍 Escribí para filtrar clienta...">
       <select id="v_clienta" style="margin-top:6px"></select>
       <div id="historial" style="margin-top:12px"></div>
@@ -196,7 +207,7 @@
     </div>
   </section>
 
-  <!-- ===== TURNOS UÑAS (Katya, Gisel y Yamila) ===== -->
+  <!-- ===== TURNOS UÑAS (Katya, Gisel y Yamina) ===== -->
   <section id="s-turno">
     <!-- Alerta de superposición en mesa compartida -->
     <div id="aviso_mesa" class="alerta-box" style="display:none;">
@@ -258,22 +269,27 @@
       <!-- Preview de comisiones 60/40 en vivo -->
       <div id="previewComision" style="margin-top:10px; background:#fbf2f6; border:1px solid #edd5e2; border-radius:12px; padding:10px; font-size:13px;">
         <div>Tu 60% (Ganancia): <strong id="prev60" style="color:var(--g);">$0</strong></div>
-        <div>40% Salón (Yamila): <strong id="prev40" style="color:var(--p);">$0</strong></div>
+        <div>40% Salón (Yamina): <strong id="prev40" style="color:var(--p);">$0</strong></div>
       </div>
 
       <button class="btn" onclick="guardarTurno()">Guardar Turno</button>
     </div>
   </section>
 
-  <!-- ===== REPORTES Y RINDES (Yamila) ===== -->
+  <!-- ===== REPORTES Y RINDES (Yamina) ===== -->
   <section id="s-reportes">
     <div class="chips" id="rep_per"></div>
     <div id="repCont"></div>
 
     <div class="card" style="margin-top:14px;">
-      <h3>⚙️ Ajustes & Respaldo</h3>
+      <h3>⚙️ Ajustes & Respaldo Total</h3>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+        <button class="mini" style="flex:1; background:#087456; color:#ffffff; font-weight:700; padding:10px;" onclick="descargarExcelHistoriasClinicas()">📊 Descargar Fórmulas a Excel (.csv)</button>
+        <button class="mini btn-sec" style="flex:1; padding:10px;" onclick="descargarExcelClientas()">👩 Descargar Clientas a Excel</button>
+      </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="mini" style="flex:1;" onclick="descargarBackup()">📥 Descargar Copia de Seguridad (JSON)</button>
+        <button class="mini" style="flex:1;" onclick="descargarBackup()">📥 Copia Completa (JSON)</button>
+        <button class="mini btn-sec" style="flex:1;" onclick="abrirConfigSupabase()">⚡ Nube & Google Drive</button>
         <button class="mini btn-sec" style="flex:1;" onclick="cambiarMiPin()">🔑 Modificar mi PIN</button>
       </div>
     </div>

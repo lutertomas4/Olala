@@ -1,5 +1,5 @@
 // ==========================================================
-// LÓGICA PRINCIPAL - SALÓN & NAILS (Yamila, Katya, Gisel)
+// LÓGICA PRINCIPAL - SALÓN & NAILS (Yamina, Katya, Gisel)
 // ==========================================================
 
 const $ = id => document.getElementById(id);
@@ -19,7 +19,8 @@ const STORAGE_KEY = 'salon_crm_v7_final';
 
 // Personas y contraseñas
 let PERSONAS = {
-  yamila: { nombre: 'Yamila', rol: 'duena', cargo: 'Dueña', icono: '💇‍♀️', color: '#b84a7a', pin: '1234' },
+  yamina: { nombre: 'Yamina', rol: 'duena', cargo: 'Dueña', icono: '💇‍♀️', color: '#b84a7a', pin: '1234' },
+  yamila: { nombre: 'Yamina', rol: 'duena', cargo: 'Dueña', icono: '💇‍♀️', color: '#b84a7a', pin: '1234' },
   katya:  { nombre: 'Katya',  rol: 'manicurista', cargo: 'Manicurista', icono: '💅', color: '#c026d3', pin: '1111' },
   gisel:  { nombre: 'Gisel',  rol: 'manicurista', cargo: 'Manicurista', icono: '✨', color: '#7c3aed', pin: '2222' }
 };
@@ -220,10 +221,10 @@ function iniciarSesion(key) {
 
   const banner = $('banner-modo');
   if (U.rol === 'duena') {
-    banner.innerHTML = `<div>👑 <strong>Modo Dueña (Yamila):</strong> Cobros de peluquería (100% tuyos) y <strong>rendiciones que las manicuristas deben entregarte (40%)</strong>.</div>`;
+    banner.innerHTML = `<div>👑 <strong>Modo Dueña (Yamina):</strong> Cobros de peluquería (100% tuyos) y <strong>rendiciones que las manicuristas deben entregarte (40%)</strong>.</div>`;
     $('t_manic_box').style.display = 'block';
   } else {
-    banner.innerHTML = `<div>💅 <strong>Modo Manicurista (${U.nombre}):</strong> Cobrás directo a tus clientas. Acá ves <strong>tu 60%</strong> y lo que <strong>debés entregar a Yamila (el 40%)</strong>.</div>`;
+    banner.innerHTML = `<div>💅 <strong>Modo Manicurista (${U.nombre}):</strong> Cobrás directo a tus clientas. Acá ves <strong>tu 60%</strong> y lo que <strong>debés entregar a Yamina (el 40%)</strong>.</div>`;
     $('t_manic_box').style.display = 'none';
   }
 
@@ -307,22 +308,22 @@ function cargarInicio() {
         nombre: p.nombre,
         turnos: misT.length,
         totalCobradoPorElla: gen,
-        debeEntregarAYamila: comisionDuena(gen),
+        debeEntregarAYamina: comisionDuena(gen),
         suGanancia: gananciaChica(gen)
       };
     });
 
-    const totalComisionesYamila = comisionesACobrar.reduce((s,c) => s + c.debeEntregarAYamila, 0);
+    const totalComisionesYamina = comisionesACobrar.reduce((s,c) => s + c.debeEntregarAYamina, 0);
 
     $('inicioCont').innerHTML = `
       <div class="kpis">
         <div class="kpi"><small>Peluquería (100% tuya)</small><big>${money(peluq)}</big></div>
-        <div class="kpi verde"><small>A cobrar uñas (40%)</small><big>${money(totalComisionesYamila)}</big></div>
-        <div class="kpi"><small>Tu Ganancia Neta</small><big>${money(peluq + totalComisionesYamila)}</big></div>
+        <div class="kpi verde"><small>A cobrar uñas (40%)</small><big>${money(totalComisionesYamina)}</big></div>
+        <div class="kpi"><small>Tu Ganancia Neta</small><big>${money(peluq + totalComisionesYamina)}</big></div>
       </div>
 
       <div class="card">
-        <h3>💅 Rendiciones de Manicuría (A Cobrar por Yamila)</h3>
+        <h3>💅 Rendiciones de Manicuría (A Cobrar por Yamina)</h3>
         <p style="font-size:13px; color:#645a61; margin-top:-6px;">Las chicas cobran directo. Acá ves cuánto te tiene que entregar cada una:</p>
         ${comisionesACobrar.map(m => `
           <div class="item">
@@ -333,7 +334,7 @@ function cargarInicio() {
             </div>
             <div style="text-align:right">
               <span style="font-size:12px; color:#645a61; display:block;">Te debe entregar:</span>
-              <b style="color:var(--p); font-size:17px;">${money(m.debeEntregarAYamila)}</b>
+              <b style="color:var(--p); font-size:17px;">${money(m.debeEntregarAYamina)}</b>
               <small style="color:var(--g); font-weight:700;">(Tu 40%)</small>
             </div>
           </div>
@@ -385,7 +386,7 @@ function cargarInicio() {
     const mios = ts.filter(t => t.mId === U.key);
     const totCobradoEnMano = mios.reduce((s,t) => s + t.monto, 0);
     const miPlata = gananciaChica(totCobradoEnMano);
-    const deboEntregarAYamila = comisionDuena(totCobradoEnMano);
+    const deboEntregarAYamina = comisionDuena(totCobradoEnMano);
 
     $('inicioCont').innerHTML = `
       <div class="kpis">
@@ -395,8 +396,8 @@ function cargarInicio() {
           <small>De ${money(totCobradoEnMano)} cobrados</small>
         </div>
         <div class="kpi" style="border:2px solid var(--p)">
-          <small>A entregar a Yamila (40%)</small>
-          <big style="color:var(--p)">${money(deboEntregarAYamila)}</big>
+          <small>A entregar a Yamina (40%)</small>
+          <big style="color:var(--p)">${money(deboEntregarAYamina)}</big>
           <small>Comisión de salón</small>
         </div>
       </div>
@@ -425,7 +426,7 @@ function cargarInicio() {
   }
 }
 
-// ---------- CLIENTAS (Yamila) ----------
+// ---------- CLIENTAS (Yamina) ----------
 function renderClientas(q) {
   q = (q || '').toLowerCase();
   const lista = clientas.filter(c => (c.nombre + ' ' + (c.tel || '')).toLowerCase().includes(q));
@@ -785,6 +786,7 @@ async function guardarVisita() {
   visitas.push(nuevaVisita);
   guardarLocalDB();
   await DB_API.saveVisita(nuevaVisita);
+  syncGoogleSheetsVisita(nuevaVisita);
 
   toast('¡Atención y ficha registradas con éxito! ✔');
   $('v_total').value = '';
@@ -856,6 +858,7 @@ async function guardarTurno() {
   turnos.push(nuevoTurno);
   guardarLocalDB();
   await DB_API.saveTurno(nuevoTurno);
+  syncGoogleSheetsTurno(nuevoTurno);
 
   toast('Turno agendado ✔');
   $('t_monto').value = '';
@@ -954,7 +957,7 @@ function calRender() {
   $('calCont').innerHTML = `<div class="cal-wrap">${gutter}${cols}</div>${dia.length ? '' : '<div class="vacio">No hay turnos este día</div>'}`;
 }
 
-// ---------- CAJA Y REPORTES (Yamila) ----------
+// ---------- CAJA Y REPORTES (Yamina) ----------
 function cargarReporte() {
   const [a,b] = rango(repPeriodo);
   const vs = visitas.filter(v => v.fecha >= a && v.fecha <= b);
@@ -962,7 +965,7 @@ function cargarReporte() {
 
   const peluq = vs.reduce((s,v) => s + v.total, 0);
   const manGen = ts.reduce((s,t) => s + t.monto, 0);
-  const aCobrarYamila = comisionDuena(manGen);
+  const aCobrarYamina = comisionDuena(manGen);
   const ticketPromedio = vs.length ? Math.round(peluq / vs.length) : 0;
 
   const ranking = {};
@@ -984,8 +987,8 @@ function cargarReporte() {
   $('repCont').innerHTML = `
     <div class="kpis">
       <div class="kpi"><small>Peluquería</small><big>${money(peluq)}</big><small>${vs.length} atenciones</small></div>
-      <div class="kpi verde"><small>Comisiones Uñas (40%)</small><big>${money(aCobrarYamila)}</big><small>A cobrar chicas</small></div>
-      <div class="kpi"><small>Tu Ganancia Total</small><big>${money(peluq + aCobrarYamila)}</big></div>
+      <div class="kpi verde"><small>Comisiones Uñas (40%)</small><big>${money(aCobrarYamina)}</big><small>A cobrar chicas</small></div>
+      <div class="kpi"><small>Tu Ganancia Total</small><big>${money(peluq + aCobrarYamina)}</big></div>
       <div class="kpi"><small>Ticket Promedio</small><big>${money(ticketPromedio)}</big></div>
     </div>
 
@@ -1006,7 +1009,7 @@ function cargarReporte() {
         const p = PERSONAS[k];
         const misT = ts.filter(t => t.mId === k);
         const tot = misT.reduce((s,t) => s + t.monto, 0);
-        const aYamila = comisionDuena(tot);
+        const aYamina = comisionDuena(tot);
         const su60 = gananciaChica(tot);
         return `
           <div style="background:#fbf6f8; border:1px solid #ebd9e2; border-radius:14px; padding:12px; margin-bottom:10px;">
@@ -1015,13 +1018,13 @@ function cargarReporte() {
               <span style="font-size:14px; font-weight:800;">Cobró: ${money(tot)}</span>
             </div>
             <div style="font-size:13px; margin-top:4px; color:#554a50;">
-              Su 60%: <strong style="color:var(--g);">${money(su60)}</strong> | <strong style="color:var(--p);">A transferir a Yamila (40%): ${money(aYamila)}</strong>
+              Su 60%: <strong style="color:var(--g);">${money(su60)}</strong> | <strong style="color:var(--p);">A transferir a Yamina (40%): ${money(aYamina)}</strong>
             </div>
             <div style="display:flex; gap:6px; margin-top:10px;">
-              <button class="mini" style="flex:1;" onclick="enviarWpp('${p.nombre}', ${misT.length}, ${tot}, ${su60}, ${aYamila})">
+              <button class="mini" style="flex:1;" onclick="enviarWpp('${p.nombre}', ${misT.length}, ${tot}, ${su60}, ${aYamina})">
                 📲 Abrir en WhatsApp
               </button>
-              <button class="mini btn-sec" onclick="copiarWpp('${p.nombre}', ${misT.length}, ${tot}, ${su60}, ${aYamila})">
+              <button class="mini btn-sec" onclick="copiarWpp('${p.nombre}', ${misT.length}, ${tot}, ${su60}, ${aYamina})">
                 📋 Copiar texto
               </button>
             </div>
@@ -1047,28 +1050,164 @@ function cargarReporte() {
   `;
 }
 
-function armarTextoWpp(nombre, cant, tot, su60, aYamila) {
+function armarTextoWpp(nombre, cant, tot, su60, aYamina) {
   return `💇‍♀️ *SALÓN & NAILS* · Rendición de Uñas\n\n` +
          `¡Hola ${nombre}! Te paso el resumen:\n` +
          `✨ Turnos realizados: ${cant}\n` +
          `💵 Total que cobraste: $${tot.toLocaleString('es-AR')}\n\n` +
          `🎉 *Tu ganancia (60%): $${su60.toLocaleString('es-AR')}*\n` +
-         `🏛️ *A transferir a Yamila (40% salón): $${aYamila.toLocaleString('es-AR')}*\n\n` +
+         `🏛️ *A transferir a Yamina (40% salón): $${aYamina.toLocaleString('es-AR')}*\n\n` +
          `¡Gracias por tu trabajo! 🙌💖`;
 }
 
-function enviarWpp(nombre, cant, tot, su60, aYamila) {
-  const txt = armarTextoWpp(nombre, cant, tot, su60, aYamila);
+function enviarWpp(nombre, cant, tot, su60, aYamina) {
+  const txt = armarTextoWpp(nombre, cant, tot, su60, aYamina);
   const url = `https://wa.me/?text=${encodeURIComponent(txt)}`;
   window.open(url, '_blank');
 }
 
-function copiarWpp(nombre, cant, tot, su60, aYamila) {
-  const txt = armarTextoWpp(nombre, cant, tot, su60, aYamila);
+function copiarWpp(nombre, cant, tot, su60, aYamina) {
+  const txt = armarTextoWpp(nombre, cant, tot, su60, aYamina);
   if (navigator.clipboard) {
     navigator.clipboard.writeText(txt).then(() => toast('Texto copiado al portapapeles ✔'));
   } else {
     alert(txt);
+  }
+}
+
+
+// ---------- EXPORTACIÓN A EXCEL Y GOOGLE SHEETS EN VIVO ----------
+function descargarExcelHistoriasClinicas() {
+  if (!visitas || !visitas.length) return toast('No hay atenciones de peluquería registradas', true);
+
+  const cabeceras = [
+    'Fecha',
+    'Clienta',
+    'Teléfono',
+    'Servicio Realizado',
+    'Fórmula Técnica Aplicada (Tinturas, Gramos, Oxidante)',
+    'Total Cobrado ($)',
+    'Forma de Pago',
+    'Alerta Capilar',
+    'Observaciones Clienta'
+  ];
+
+  const filas = visitas.map(v => {
+    const c = clientas.find(x => x.id === v.cid) || {};
+    const celda = t => '"' + String(t ?? '').replace(/"/g, '""').replace(/[\r\n]+/g, ' ') + '"';
+    return [
+      celda(v.fecha),
+      celda(c.nombre || 'Clienta'),
+      celda(c.tel || 'Sin teléfono'),
+      celda(v.servicio || ''),
+      celda(v.formula || 'Sin fórmula'),
+      celda(v.total || 0),
+      celda(v.pago || ''),
+      celda(c.alerta || ''),
+      celda(c.obs || '')
+    ].join(';');
+  });
+
+  const csv = '\uFEFF' + cabeceras.join(';') + '\n' + filas.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Formulas_Peluqueria_Yamina_${hoy()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('📊 Fórmulas de Yamina descargadas a Excel');
+}
+
+function descargarExcelClientas() {
+  if (!clientas || !clientas.length) return toast('No hay clientas para exportar', true);
+
+  const cabeceras = ['Nombre', 'Teléfono', 'Cumpleaños', 'Alerta Capilar', 'Observaciones'];
+  const filas = clientas.map(c => {
+    const celda = t => '"' + String(t ?? '').replace(/"/g, '""').replace(/[\r\n]+/g, ' ') + '"';
+    return [
+      celda(c.nombre),
+      celda(c.tel || ''),
+      celda(c.cumple || ''),
+      celda(c.alerta || ''),
+      celda(c.obs || '')
+    ].join(';');
+  });
+
+  const csv = '\uFEFF' + cabeceras.join(';') + '\n' + filas.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Directorio_Clientas_Yamina_${hoy()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('👩 Directorio de clientas descargado a Excel');
+}
+
+async function syncGoogleSheetsVisita(visitaData) {
+  const url = localStorage.getItem('SALON_GOOGLE_SHEETS_URL');
+  if (!url) return;
+
+  const c = clientas.find(x => x.id === visitaData.cid) || {};
+  const payload = {
+    tipo: 'visita_pelo',
+    fecha: visitaData.fecha,
+    clienta: c.nombre || 'Clienta',
+    telefono: c.tel || '',
+    servicio: visitaData.servicio,
+    formula: visitaData.formula,
+    total: visitaData.total,
+    pago: visitaData.pago,
+    alerta: c.alerta || '',
+    observaciones: c.obs || ''
+  };
+
+  try {
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    console.log('☁️ Respaldo enviado automáticamente a Google Sheets en Drive');
+  } catch(e) {
+    console.warn('Error al enviar a Google Sheets:', e);
+  }
+}
+
+async function syncGoogleSheetsTurno(turnoData) {
+  const url = localStorage.getItem('SALON_GOOGLE_SHEETS_URL');
+  if (!url) return;
+
+  const c = clientas.find(x => x.id === turnoData.cid) || {};
+  const payload = {
+    tipo: 'turno_unas',
+    fecha: turnoData.fecha,
+    inicio: turnoData.inicio,
+    fin: turnoData.fin,
+    manicurista: PERSONAS[turnoData.mId]?.nombre || turnoData.mId,
+    clienta: c.nombre || turnoData.clientaManual || 'Clienta',
+    trabajo: turnoData.trabajo,
+    detalle: turnoData.detalle || '',
+    total: turnoData.monto,
+    pago: turnoData.pago
+  };
+
+  try {
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    console.log('☁️ Turno respaldado en Google Sheets');
+  } catch(e) {
+    console.warn('Error al enviar turno a Google Sheets:', e);
   }
 }
 
@@ -1087,6 +1226,7 @@ function descargarBackup() {
 function abrirConfigSupabase() {
   $('supabase-url-input').value = localStorage.getItem('SALON_SUPABASE_URL') || '';
   $('supabase-key-input').value = localStorage.getItem('SALON_SUPABASE_KEY') || '';
+  if ($('google-sheets-url-input')) $('google-sheets-url-input').value = localStorage.getItem('SALON_GOOGLE_SHEETS_URL') || '';
   $('modal-config-db').style.display = 'flex';
 }
 
@@ -1097,6 +1237,8 @@ function cerrarConfigSupabase() {
 function guardarConfigSupabase() {
   const url = $('supabase-url-input').value.trim();
   const key = $('supabase-key-input').value.trim();
+  const gSheetsUrl = $('google-sheets-url-input') ? $('google-sheets-url-input').value.trim() : '';
+  if (gSheetsUrl) localStorage.setItem('SALON_GOOGLE_SHEETS_URL', gSheetsUrl); else localStorage.removeItem('SALON_GOOGLE_SHEETS_URL');
 
   if (!url || !key) {
     localStorage.removeItem('SALON_SUPABASE_URL');
