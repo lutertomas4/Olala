@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Salón & Nails · Gestión Integral</title>
+<meta name="theme-color" content="#b84a7a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Salón CRM">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23b84a7a'/><text y='68' x='50' font-size='60' text-anchor='middle'>💇‍♀️</text></svg>">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<!-- PANTALLA DE SELECCIÓN DE USUARIO (SPLASH) -->
+<div id="splash-login">
+  <div class="splash-box">
+    <h1>💇‍♀️ Salón & Nails</h1>
+    <p>Seleccioná tu usuario para ingresar al sistema:</p>
+    <div class="user-cards">
+      <!-- Yamila -->
+      <button class="user-btn" onclick="solicitarPin('yamila')">
+        <div class="user-avatar" style="background-color:#fce7f3; color:#b84a7a;">💇‍♀️</div>
+        <div class="user-info">
+          <b>Yamila (Mamá)</b>
+          <span>Dueña · Peluquería & Rindes</span>
+        </div>
+        <span class="badge-role" style="background-color:#fce7f3; color:#b84a7a;">🔒 PIN 1234</span>
+      </button>
+
+      <!-- Katya -->
+      <button class="user-btn" onclick="solicitarPin('katya')">
+        <div class="user-avatar" style="background-color:#fae8ff; color:#c026d3;">💅</div>
+        <div class="user-info">
+          <b>Katya</b>
+          <span>Manicurista · Mesa 1</span>
+        </div>
+        <span class="badge-role" style="background-color:#fae8ff; color:#c026d3;">🔒 PIN 1111</span>
+      </button>
+
+      <!-- Gisel -->
+      <button class="user-btn" onclick="solicitarPin('gisel')">
+        <div class="user-avatar" style="background-color:#ede9fe; color:#7c3aed;">✨</div>
+        <div class="user-info">
+          <b>Gisel</b>
+          <span>Manicurista · Mesa 2</span>
+        </div>
+        <span class="badge-role" style="background-color:#ede9fe; color:#7c3aed;">🔒 PIN 2222</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PARA INGRESAR CONTRASEÑA / PIN -->
+<div id="modal-pin">
+  <div class="pin-box">
+    <div id="pin-avatar" style="font-size:38px; margin-bottom:6px;">🔒</div>
+    <h3 id="pin-user-title">Ingresá tu PIN</h3>
+    <p id="pin-user-desc">Ingresá la contraseña para acceder a tu cuenta</p>
+    <input id="pin-input" class="pin-input" type="password" maxlength="8" placeholder="••••" autocomplete="off">
+    <div class="pin-actions">
+      <button class="btn btn-sec" style="margin-top:0;" onclick="cerrarModalPin()">Cancelar</button>
+      <button class="btn" style="margin-top:0;" onclick="verificarPin()">Entrar</button>
+    </div>
+    <div class="pin-hint">
+      <strong>PINs de prueba:</strong> Yamila: <b>1234</b> · Katya: <b>1111</b> · Gisel: <b>2222</b>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE CONFIGURACIÓN DE SUPABASE -->
+<div id="modal-config-db">
+  <div class="pin-box" style="max-width: 440px; text-align: left;">
+    <h3 style="margin-top:0;">⚡ Conectar Base de Datos (Supabase)</h3>
+    <p style="font-size:12px; color:var(--txt-muted);">Pegá los datos de tu proyecto de Supabase para tener sincronización en vivo entre todos los celulares:</p>
+    
+    <label>Project URL:</label>
+    <input id="supabase-url-input" placeholder="https://tu-proyecto.supabase.co">
+
+    <label>Anon Public Key:</label>
+    <input id="supabase-key-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+
+    <div class="pin-actions" style="margin-top:14px;">
+      <button class="btn btn-sec" style="margin-top:0;" onclick="cerrarConfigSupabase()">Cancelar</button>
+      <button class="btn" style="margin-top:0;" onclick="guardarConfigSupabase()">Guardar y Conectar</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP HEADER -->
+<header>
+  <b><span id="h-icon">💇‍♀️</span> <span id="h-user">Salón & Nails</span></b>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <button class="btn-switch" onclick="abrirConfigSupabase()" title="Configurar conexión en la nube">⚡ Nube</button>
+    <button class="btn-switch" onclick="abrirSelectorUsuario()">🔄 Salir</button>
+  </div>
+</header>
+
+<div class="banner-modo" id="banner-modo"></div>
+
+<main>
+  <!-- Barra de estado online -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <span id="badge-conexion" class="status-badge local"><span class="status-dot"></span> Modo Local</span>
+    <button class="mini btn-sec" style="font-size:11px;" onclick="restablecerDatosEjemplo()">🔄 Recargar ejemplos</button>
+  </div>
+
+  <!-- ===== INICIO / JORNADA ===== -->
+  <section id="s-inicio" class="on">
+    <div class="chips" id="per"></div>
+    <div id="inicioCont" style="margin-top:12px"></div>
+  </section>
+
+  <!-- ===== CLIENTAS (Yamila) ===== -->
+  <section id="s-clientas">
+    <div id="perfil"></div>
+    <div class="card">
+      <details id="det_nueva_clienta">
+        <summary style="cursor:pointer; font-weight:800; color:var(--p);">➕ Nueva clienta</summary>
+        <label>Nombre y Apellido (*)</label><input id="c_nombre" placeholder="Ej: Marcela López">
+        <div class="row2">
+          <div><label>Teléfono (WhatsApp)</label><input id="c_tel" inputmode="tel" placeholder="11 2345-6789"></div>
+          <div><label>Cumpleaños</label><input id="c_cumple" type="date"></div>
+        </div>
+        <label>Alerta Capilar / Cuero cabelludo</label>
+        <input id="c_alerta" placeholder="Ej: Sensible a amoníaco, decoloración previa, pelo poroso...">
+        <label>Observaciones generales</label>
+        <input id="c_obs" placeholder="Clienta frecuente, tono 7.1 habitual...">
+        <button class="btn" onclick="guardarClienta()">Guardar clienta</button>
+      </details>
+    </div>
+    <div class="card">
+      <label>Buscar clienta:</label>
+      <input id="buscar" placeholder="🔍 Escribí un nombre o teléfono...">
+      <div id="listaClientas" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- ===== VISITA PELUQUERÍA (Yamila - Ficha Técnica Dinámica) ===== -->
+  <section id="s-visita">
+    <div class="card">
+      <label>Clienta en el salón</label>
+      <input id="v_buscar" placeholder="🔍 Escribí para filtrar clienta...">
+      <select id="v_clienta" style="margin-top:6px"></select>
+      <div id="historial" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <h3>Nueva Atención de Peluquería</h3>
+      
+      <!-- Selector de Tipo de Servicio Técnico -->
+      <label>Tipo de Trabajo Realizado:</label>
+      <div class="chips" id="v_serv_chips"></div>
+
+      <!-- Contenedor dinámico según el servicio elegido -->
+      <div id="seccion_tecnica_dinamica"></div>
+
+      <!-- Productos de Venta al Público opcionales -->
+      <div style="margin-top:14px; border-top:1px dashed var(--border); padding-top:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <label style="margin:0;">Venta de Productos (opcional):</label>
+          <button type="button" class="mini" onclick="agregarProductoVenta()">➕ [+] Producto</button>
+        </div>
+        <div id="f_productos"></div>
+      </div>
+
+      <!-- Cobro y Medio de Pago -->
+      <label>Monto Total a Cobrar ($):</label>
+      <input id="v_total" type="number" placeholder="Ej: 35000">
+
+      <label>Forma de Pago:</label>
+      <select id="v_pago_tipo" onchange="togglePagoMixto()">
+        <option value="simple">Pago Simple (un solo medio)</option>
+        <option value="mixto">Pago Mixto (ej: Efectivo + Transferencia)</option>
+      </select>
+
+      <div id="caja_pago_simple" style="margin-top:6px;">
+        <div class="chips" id="v_pago"></div>
+      </div>
+
+      <div id="caja_pago_mixto" style="display:none; margin-top:8px; background:#fdf8fa; border:1px solid #ebd9e2; border-radius:12px; padding:10px;">
+        <div class="row2">
+          <div>
+            <label style="margin-top:0;">Efectivo ($):</label>
+            <input id="v_pago_efectivo" type="number" placeholder="Ej: 20000">
+          </div>
+          <div>
+            <label style="margin-top:0;">Transferencia ($):</label>
+            <input id="v_pago_transf" type="number" placeholder="Ej: 15000">
+          </div>
+        </div>
+      </div>
+
+      <button class="btn" onclick="guardarVisita()">Registrar Atención y Guardar Ficha</button>
+    </div>
+  </section>
+
+  <!-- ===== TURNOS UÑAS (Katya, Gisel y Yamila) ===== -->
+  <section id="s-turno">
+    <!-- Alerta de superposición en mesa compartida -->
+    <div id="aviso_mesa" class="alerta-box" style="display:none;">
+      <span>⚠️</span>
+      <div><strong>Alerta de Mesa Compartida:</strong> Hay dos turnos superpuestos a la misma hora entre Katya y Gisel.</div>
+    </div>
+
+    <div class="card">
+      <div class="cal-top">
+        <button class="mini" onclick="calMover(-1)">◀ Día anterior</button>
+        <strong id="calLbl" style="color:var(--p); font-size:14px;">Hoy</strong>
+        <button class="mini" onclick="calMover(1)">Día siguiente ▶</button>
+      </div>
+      <div id="calCont"></div>
+    </div>
+
+    <div class="card">
+      <h3>Agendar Turno de Uñas</h3>
+      <div class="row2">
+        <div><label>Fecha</label><input id="t_fecha" type="date"></div>
+        <div><label>Hora Inicio</label><input id="t_inicio" type="time"></div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label>Duración</label>
+          <div class="chips" id="t_dur"></div>
+        </div>
+        <div>
+          <label>Hora Fin (calculada)</label>
+          <input id="t_fin" type="time" readonly style="background:#faf5f8;">
+        </div>
+      </div>
+
+      <div id="t_manic_box" style="display:none">
+        <label>Manicurista:</label>
+        <div class="chips" id="t_manic"></div>
+      </div>
+
+      <label>Clienta:</label>
+      <select id="t_clienta"></select>
+      <input id="t_clienta_manual" placeholder="O escribir nombre si es clienta nueva..." style="margin-top:6px">
+
+      <label>Servicio Realizado:</label>
+      <div class="chips" id="t_trab"></div>
+      <input id="t_detalle" placeholder="Detalle (ej: diseño french, baby boomer, strass)..." style="margin-top:4px">
+
+      <div class="row2">
+        <div>
+          <label>Monto Total ($)</label>
+          <input id="t_monto" type="number" placeholder="Ej: 12000">
+        </div>
+        <div>
+          <label>Medio de Pago</label>
+          <div class="chips" id="t_pago"></div>
+        </div>
+      </div>
+
+      <!-- Preview de comisiones 60/40 en vivo -->
+      <div id="previewComision" style="margin-top:10px; background:#fbf2f6; border:1px solid #edd5e2; border-radius:12px; padding:10px; font-size:13px;">
+        <div>Tu 60% (Ganancia): <strong id="prev60" style="color:var(--g);">$0</strong></div>
+        <div>40% Salón (Yamila): <strong id="prev40" style="color:var(--p);">$0</strong></div>
+      </div>
+
+      <button class="btn" onclick="guardarTurno()">Guardar Turno</button>
+    </div>
+  </section>
+
+  <!-- ===== REPORTES Y RINDES (Yamila) ===== -->
+  <section id="s-reportes">
+    <div class="chips" id="rep_per"></div>
+    <div id="repCont"></div>
+
+    <div class="card" style="margin-top:14px;">
+      <h3>⚙️ Ajustes & Respaldo</h3>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="mini" style="flex:1;" onclick="descargarBackup()">📥 Descargar Copia de Seguridad (JSON)</button>
+        <button class="mini btn-sec" style="flex:1;" onclick="cambiarMiPin()">🔑 Modificar mi PIN</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<nav id="tabs"></nav>
+<div id="toast"></div>
+
+<!-- SUPABASE CLIENT & APP LOGIC -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
