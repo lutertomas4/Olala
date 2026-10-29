@@ -2,9 +2,9 @@
 // CLIENTE Y ADAPTADOR DE SUPABASE (SALÓN & NAILS)
 // ==========================================================
 
-// Configuración por defecto (Podés pegarlas acá o cargarlas desde el botón en la app)
-const DEFAULT_SUPABASE_URL = "";
-const DEFAULT_SUPABASE_ANON_KEY = "";
+// Configuración por defecto (Tu proyecto de Supabase)
+const DEFAULT_SUPABASE_URL = "https://wonjvkeqkbtjyydgfsik.supabase.co";
+const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_eUm_IQCZe3ZTrRqPMf3ozg_MNilEPZ5";
 
 let supabaseClient = null;
 let isOnlineSupabase = false;
