@@ -103,6 +103,7 @@ const DB_API = {
       const payload = {
         id: v.id,
         cliente_id: v.cid,
+        cliente_nombre: v.clienta_nombre || '',
         fecha: v.fecha,
         servicio: v.servicio,
         formula: v.formula,
@@ -110,7 +111,11 @@ const DB_API = {
         pago: v.pago
       };
       const { error } = await supabaseClient.from('visitas_pelo').insert(payload);
-      if (error) console.error('Error insertando visita en Supabase:', error);
+      if (error) {
+        console.warn('Reintentando guardar visita sin cliente_id estricto:', error);
+        payload.cliente_id = null;
+        await supabaseClient.from('visitas_pelo').insert(payload);
+      }
     }
   },
 
@@ -161,7 +166,11 @@ const DB_API = {
         pago: t.pago
       };
       const { error } = await supabaseClient.from('turnos_unas').insert(payload);
-      if (error) console.error('Error insertando turno en Supabase:', error);
+      if (error) {
+        console.warn('Reintentando guardar turno sin cliente_id estricto:', error);
+        payload.cliente_id = null;
+        await supabaseClient.from('turnos_unas').insert(payload);
+      }
     }
   },
 

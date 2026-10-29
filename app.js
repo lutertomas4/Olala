@@ -773,9 +773,11 @@ async function guardarVisita() {
     metodoPago = `Mixto ($${ef} Efec + $${tr} Transf)`;
   }
 
+  const cSel = clientas.find(c => c.id === $('v_clienta').value);
   const nuevaVisita = {
     id: Date.now(),
     cid: $('v_clienta').value,
+    clienta_nombre: cSel?.nombre || 'Clienta',
     fecha: hoy(),
     servicio: servicioPeluqueriaActivo,
     formula: formula,
