@@ -19,10 +19,10 @@ const STORAGE_KEY = 'salon_crm_v7_final';
 
 // Personas y contraseñas
 let PERSONAS = {
-  yamina: { nombre: 'Yamina', rol: 'duena', cargo: 'Dueña', icono: '💇‍♀️', color: '#b84a7a', pin: '1234' },
-  yamila: { nombre: 'Yamina', rol: 'duena', cargo: 'Dueña', icono: '💇‍♀️', color: '#b84a7a', pin: '1234' },
-  katya:  { nombre: 'Katya',  rol: 'manicurista', cargo: 'Manicurista', icono: '💅', color: '#c026d3', pin: '1111' },
-  gisel:  { nombre: 'Gisel',  rol: 'manicurista', cargo: 'Manicurista', icono: '✨', color: '#7c3aed', pin: '2222' }
+  yamina: { nombre: 'Yamina', rol: 'duena', cargo: 'Dueña', icono: '💇‍♀️', color: '#8a384f', pin: '1234' },
+  yamila: { nombre: 'Yamina', rol: 'duena', cargo: 'Dueña', icono: '💇‍♀️', color: '#8a384f', pin: '1234' },
+  katya:  { nombre: 'Katya',  rol: 'manicurista', cargo: 'Manicurista', icono: '💅', color: '#a83868', pin: '1111' },
+  gisel:  { nombre: 'Gisel',  rol: 'manicurista', cargo: 'Manicurista', icono: '✨', color: '#644190', pin: '2222' }
 };
 
 // Generador de Semilla inicial
@@ -216,14 +216,14 @@ function iniciarSesion(key) {
   $('splash-login').style.display = 'none';
 
   if ($('h-icon')) $('h-icon').textContent = U.icono;
-  if ($('h-user')) $('h-user').textContent = '· ' + U.nombre + (U.rol === 'duena' ? ' (Dueña)' : ' (Uñas)');
+  if ($('h-user')) $('h-user').textContent = U.nombre + (U.rol === 'duena' ? ' · Dueña' : ' · Uñas');
 
   const banner = $('banner-modo');
   if (U.rol === 'duena') {
-    banner.innerHTML = `<div>👑 <strong>Modo Dueña (Yamina):</strong> Cobros de peluquería (100% tuyos) y <strong>rendiciones que las manicuristas deben entregarte (40%)</strong>.</div>`;
+    banner.innerHTML = `<div>✨ <strong>Atelier Yamina:</strong> Peluquería (100% tuya) y control de <strong>rendiciones de manicuría (40% salón)</strong>.</div>`;
     $('t_manic_box').style.display = 'block';
   } else {
-    banner.innerHTML = `<div>💅 <strong>Modo Manicurista (${U.nombre}):</strong> Cobrás directo a tus clientas. Acá ves <strong>tu 60%</strong> y lo que <strong>debés entregar a Yamina (el 40%)</strong>.</div>`;
+    banner.innerHTML = `<div>💅 <strong>Espacio ${U.nombre}:</strong> Registrá tus turnos cobrados. Ves <strong>tu 60% neto</strong> y el <strong>40% para rendir a Yamina</strong>.</div>`;
     $('t_manic_box').style.display = 'none';
   }
 
@@ -319,68 +319,69 @@ function cargarInicio() {
 
     $('inicioCont').innerHTML = `
       <div class="kpis">
-        <div class="kpi"><small>Peluquería (100% tuya)</small><big>${money(peluq)}</big></div>
-        <div class="kpi verde"><small>A cobrar uñas (40%)</small><big>${money(totalComisionesYamina)}</big></div>
-        <div class="kpi"><small>Tu Ganancia Neta</small><big>${money(peluq + totalComisionesYamina)}</big></div>
+        <div class="kpi rose"><small>Peluquería (100% tuya)</small><big>${money(peluq)}</big><small>${vs.length} atenciones</small></div>
+        <div class="kpi verde"><small>A cobrar uñas (40%)</small><big>${money(totalComisionesYamina)}</big><small>${ts.length} turnos</small></div>
+        <div class="kpi noir"><small>Tu Ganancia Neta</small><big>${money(peluq + totalComisionesYamina)}</big><small>Total salón</small></div>
       </div>
 
       <div class="card">
-        <h3>💅 Rendiciones de Manicuría (A Cobrar por Yamina)</h3>
-        <p style="font-size:13px; color:#645a61; margin-top:-6px;">Las chicas cobran directo. Acá ves cuánto te tiene que entregar cada una:</p>
+        <h3>💅 Rendiciones de Manicuría</h3>
+        <p class="section-sub">Las chicas cobran directo en mesa. Este es el detalle de lo que te corresponde recibir (40%):</p>
         ${comisionesACobrar.map(m => `
           <div class="item">
             <div>
               <b>${esc(m.nombre)}</b>
-              <small>${m.turnos} turnos · Cobró en mano ${money(m.totalCobradoPorElla)}</small>
-              <small style="color:#645a61">Su 60%: ${money(m.suGanancia)}</small>
+              <small>${m.turnos} turnos · Recaudó en mano ${money(m.totalCobradoPorElla)}</small>
+              <small style="color:var(--txt-sec);">Su 60% neto: <strong>${money(m.suGanancia)}</strong></small>
             </div>
             <div style="text-align:right">
-              <span style="font-size:12px; color:#645a61; display:block;">Te debe entregar:</span>
-              <b style="color:var(--p); font-size:17px;">${money(m.debeEntregarAYamina)}</b>
-              <small style="color:var(--g); font-weight:700;">(Tu 40%)</small>
+              <span style="font-size:11px; color:var(--txt-muted); display:block; text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">Te transfiere / entrega</span>
+              <b style="color:var(--p); font-size:18px; font-family:var(--font-serif);">${money(m.debeEntregarAYamina)}</b>
+              <small style="color:var(--g); font-weight:700;">Tu 40% salón</small>
             </div>
           </div>
         `).join('')}
       </div>
 
       <div class="card">
-        <h3>Detalle de atenciones en peluquería (${vs.length})</h3>
+        <h3>✂️ Atenciones de Peluquería (${vs.length})</h3>
         ${vs.length ? vs.map(v => {
           const clienta = clientas.find(c => c.id === v.cid)?.nombre || 'Clienta';
           return `
             <div class="item">
               <div>
-                <b>${esc(clienta)}</b> · ${esc(v.servicio)}
+                <b>${esc(clienta)}</b> · <span style="color:var(--p-rose-deep); font-weight:700; font-size:13px;">${esc(v.servicio)}</span>
                 <small>${esc(v.fecha)} · ${esc(v.pago)}</small>
-                <div style="font-size:12px; font-family:monospace; color:#831843; margin-top:2px;">${esc(v.formula || 'Sin fórmula')}</div>
+                <div class="formula-pill">🧪 ${esc(v.formula || 'Sin fórmula')}</div>
               </div>
-              <div style="text-align:right">
-                <b>${money(v.total)}</b>
-                <button class="mini danger" style="margin-top:4px; font-size:10px; padding:2px 6px;" onclick="eliminarVisita(${v.id})">Borrar</button>
+              <div style="text-align:right; flex-shrink:0;">
+                <b style="font-family:var(--font-serif); font-size:16px;">${money(v.total)}</b>
+                <br>
+                <button class="mini danger" style="margin-top:6px; font-size:10.5px; padding:4px 9px;" onclick="eliminarVisita(${v.id})">Borrar</button>
               </div>
             </div>
           `;
-        }).join('') : '<div class="vacio">Sin visitas de peluquería en este período</div>'}
+        }).join('') : '<div class="vacio">Sin atenciones de peluquería en este período</div>'}
       </div>
 
       <div class="card">
-        <h3>Detalle de turnos de uñas (${ts.length})</h3>
+        <h3>💅 Turnos de Nail Studio (${ts.length})</h3>
         ${ts.length ? ts.map(t => {
           const clienta = clientas.find(c => c.id === t.cid)?.nombre || t.clientaManual || 'Clienta';
           return `
             <div class="item">
               <div>
-                <b>${esc(PERSONAS[t.mId]?.nombre || t.mId)}</b> con <strong>${esc(clienta)}</strong>
-                <small>${esc(t.trabajo)}${t.detalle ? ' · ' + esc(t.detalle) : ''} · ${esc(t.fecha)} ${t.inicio}–${t.fin} · ${esc(t.pago)}</small>
+                <b>${esc(PERSONAS[t.mId]?.nombre || t.mId)}</b> <span style="color:var(--txt-muted); font-size:12px;">atendió a</span> <strong>${esc(clienta)}</strong>
+                <small>${esc(t.trabajo)}${t.detalle ? ' · ' + esc(t.detalle) : ''} · ${esc(t.fecha)} (${t.inicio}–${t.fin}) · ${esc(t.pago)}</small>
               </div>
-              <div style="text-align:right">
-                <b>${money(t.monto)}</b>
-                <small style="color:var(--p); font-weight:700;">Tu 40%: ${money(comisionDuena(t.monto))}</small>
-                <button class="mini danger" style="margin-top:4px; font-size:10px; padding:2px 6px;" onclick="eliminarTurno(${t.id})">Borrar</button>
+              <div style="text-align:right; flex-shrink:0;">
+                <b style="font-family:var(--font-serif); font-size:16px;">${money(t.monto)}</b>
+                <small style="color:var(--g); font-weight:700;">Tu 40%: ${money(comisionDuena(t.monto))}</small>
+                <button class="mini danger" style="margin-top:5px; font-size:10.5px; padding:4px 9px;" onclick="eliminarTurno(${t.id})">Borrar</button>
               </div>
             </div>
           `;
-        }).join('') : '<div class="vacio">Sin turnos en este período</div>'}
+        }).join('') : '<div class="vacio">Sin turnos de manicuría en este período</div>'}
       </div>
     `;
   } else {
@@ -397,28 +398,28 @@ function cargarInicio() {
           <big>${money(miPlata)}</big>
           <small>De ${money(totCobradoEnMano)} cobrados</small>
         </div>
-        <div class="kpi" style="border:2px solid var(--p)">
-          <small>A entregar a Yamina (40%)</small>
-          <big style="color:var(--p)">${money(deboEntregarAYamina)}</big>
-          <small>Comisión de salón</small>
+        <div class="kpi noir">
+          <small>A rendir a Yamina (40%)</small>
+          <big>${money(deboEntregarAYamina)}</big>
+          <small>Comisión salón</small>
         </div>
       </div>
 
       <div class="card">
-        <h3>Tus Turnos Cobrados (${mios.length})</h3>
+        <h3>💅 Tus Turnos Registrados (${mios.length})</h3>
         ${mios.length ? mios.map(t => {
           const clienta = clientas.find(c => c.id === t.cid)?.nombre || t.clientaManual || 'Clienta';
           return `
             <div class="item">
               <div>
-                <b>${esc(clienta)}</b> · ${esc(t.trabajo)}
-                <small>${esc(t.fecha)} ${t.inicio}–${t.fin} · ${esc(t.pago)}</small>
-                ${t.detalle ? `<small style="color:#645a61">${esc(t.detalle)}</small>` : ''}
+                <b>${esc(clienta)}</b> · <span style="color:var(--p-rose-deep); font-weight:700; font-size:13px;">${esc(t.trabajo)}</span>
+                <small>${esc(t.fecha)} (${t.inicio}–${t.fin}) · ${esc(t.pago)}</small>
+                ${t.detalle ? `<small style="color:var(--txt-sec);">✨ ${esc(t.detalle)}</small>` : ''}
               </div>
-              <div style="text-align:right">
-                <b>${money(t.monto)}</b>
+              <div style="text-align:right; flex-shrink:0;">
+                <b style="font-family:var(--font-serif); font-size:16px;">${money(t.monto)}</b>
                 <small style="color:var(--g); font-weight:700;">Tu 60%: ${money(gananciaChica(t.monto))}</small>
-                <button class="mini danger" style="margin-top:4px; font-size:10px; padding:2px 6px;" onclick="eliminarTurno(${t.id})">Borrar</button>
+                <button class="mini danger" style="margin-top:5px; font-size:10.5px; padding:4px 9px;" onclick="eliminarTurno(${t.id})">Borrar</button>
               </div>
             </div>
           `;
@@ -433,14 +434,14 @@ function renderClientas(q) {
   q = (q || '').toLowerCase();
   const lista = clientas.filter(c => (c.nombre + ' ' + (c.tel || '')).toLowerCase().includes(q));
   $('listaClientas').innerHTML = lista.length ? lista.map(c => `
-    <div class="item" style="cursor:pointer" onclick="abrirClienta('${c.id}')">
+    <div class="item client-row" onclick="abrirClienta('${c.id}')">
       <div>
         <b>${esc(c.nombre)}</b>
         <small>${esc(c.tel || 'Sin teléfono')}${c.alerta ? ' · ⚠️ ' + esc(c.alerta) : ''}</small>
       </div>
-      <span style="color:var(--p); font-size:18px;">›</span>
+      <span class="mini" style="pointer-events:none;">Ver ficha ›</span>
     </div>`).join('')
-    : '<div class="vacio">No hay clientas con ese nombre.</div>';
+    : '<div class="vacio">No encontramos clientas con ese nombre.</div>';
 }
 
 function abrirClienta(id) {
@@ -451,69 +452,69 @@ function abrirClienta(id) {
   const u = vs[0];
 
   $('perfil').innerHTML = `
-    <div class="card" style="border: 2px solid var(--p);">
+    <div class="card card-featured">
       <div class="resumen-cabecera">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <small>Último turno: ${u ? esc(u.fecha) : 'Sin visitas previas'}</small>
-          <span style="font-size:11px; background:#ffffff33; padding:2px 8px; border-radius:10px;">${vs.length} atenciones</span>
+          <small>Última visita: ${u ? esc(u.fecha) : 'Sin visitas previas'}</small>
+          <span style="font-size:11px; background:rgba(255,255,255,0.16); padding:3px 10px; border-radius:999px; font-weight:700;">${vs.length} fichas</span>
         </div>
         ${u ? `
-          <div style="font-size:15px; font-weight:800; margin-top:4px;">${esc(u.servicio)}</div>
+          <div style="font-family:var(--font-serif); font-size:18px; font-weight:700; margin-top:6px;">${esc(u.servicio)}</div>
           <div class="formula-tag">🧪 ${esc(u.formula || 'Sin fórmula')}</div>
-          <button class="mini" style="margin-top:8px; background:#ffffff; color:var(--p);" onclick="repetirFormula('${esc(u.formula)}')">
+          <button class="btn-repeat" onclick="repetirFormula('${esc(u.formula)}')">
             🔄 Usar esta misma fórmula hoy
           </button>
-        ` : '<div style="margin-top:4px;">Primera visita de esta clienta 🌟</div>'}
+        ` : '<div style="margin-top:6px; font-size:13px;">Primera atención en el salón ✨</div>'}
       </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:start;">
+      <div style="display:flex; justify-content:space-between; align-items:start; gap:10px;">
         <div>
-          <h2 style="margin:0">${esc(c.nombre)}</h2>
-          <small style="color:var(--txt-muted)">${esc(c.tel || 'Sin teléfono')}${c.cumple ? ' · 🎂 Cumple: ' + esc(c.cumple) : ''}</small>
+          <h2 style="margin:0; font-size:22px;">${esc(c.nombre)}</h2>
+          <small style="color:var(--txt-muted); font-size:12.5px;">${esc(c.tel || 'Sin teléfono')}${c.cumple ? ' · 🎂 ' + esc(c.cumple) : ''}</small>
         </div>
-        ${c.tel ? `<button class="mini" onclick="abrirWppClienta('${esc(c.tel)}', '${esc(c.nombre)}')">💬 WhatsApp</button>` : ''}
+        ${c.tel ? `<button class="mini excel-btn" onclick="abrirWppClienta('${esc(c.tel)}', '${esc(c.nombre)}')">💬 WhatsApp</button>` : ''}
       </div>
 
       ${c.alerta ? `
-        <div class="alerta-box" style="margin-top:10px;">
+        <div class="alerta-box" style="margin-top:12px;">
           <span>⚠️</span>
-          <div><strong>Alerta Capilar:</strong> ${esc(c.alerta)}</div>
+          <div><strong>Diagnóstico / Alerta Capilar:</strong> ${esc(c.alerta)}</div>
         </div>
       ` : ''}
 
-      ${c.obs ? `<div style="font-size:13px; color:#5c5259; margin-top:8px;"><strong>Notas:</strong> ${esc(c.obs)}</div>` : ''}
+      ${c.obs ? `<div style="font-size:13px; color:var(--txt-sec); margin-top:8px; background:var(--p-rose-soft); padding:10px 14px; border-radius:12px;"><strong>Notas de estilo:</strong> ${esc(c.obs)}</div>` : ''}
 
-      <h3 style="margin-top:16px; border-top:1px solid #ebd9e2; padding-top:12px;">Historial de Peluquería (${vs.length})</h3>
+      <h3 style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">✂️ Historial Químico y Peluquería (${vs.length})</h3>
       ${vs.length ? vs.map(v => `
         <div class="item">
           <div>
             <b>${esc(v.servicio)}</b> · <span style="font-size:12px; color:var(--txt-muted);">${esc(v.fecha)}</span>
-            <div style="font-size:12px; font-family:monospace; color:#831843; margin-top:3px;">${esc(v.formula || 'Sin fórmula')}</div>
+            <div class="formula-pill">🧪 ${esc(v.formula || 'Sin fórmula')}</div>
           </div>
-          <div style="text-align:right">
-            <b>${money(v.total)}</b>
+          <div style="text-align:right; flex-shrink:0;">
+            <b style="font-family:var(--font-serif); font-size:16px;">${money(v.total)}</b>
             <small>${esc(v.pago)}</small>
           </div>
         </div>
-      `).join('') : '<div class="vacio">Sin visitas de peluquería</div>'}
+      `).join('') : '<div class="vacio">Sin visitas de peluquería registradas</div>'}
 
-      <h3 style="margin-top:14px; border-top:1px solid #ebd9e2; padding-top:10px;">Atenciones de Manicuría (${ms.length})</h3>
+      <h3 style="margin-top:16px; border-top:1px solid var(--border); padding-top:12px;">💅 Historial de Manicuría (${ms.length})</h3>
       ${ms.length ? ms.map(t => `
         <div class="item">
           <div>
-            <b>${esc(t.trabajo)}</b> con ${esc(PERSONAS[t.mId]?.nombre || t.mId)}
-            <small>${esc(t.fecha)} · ${esc(t.detalle || 'Sin detalle')}</small>
+            <b>${esc(t.trabajo)}</b> <span style="font-size:12px; color:var(--txt-muted);">con ${esc(PERSONAS[t.mId]?.nombre || t.mId)}</span>
+            <small>${esc(t.fecha)} · ${esc(t.detalle || 'Diseño clásico')}</small>
           </div>
-          <div style="text-align:right">
-            <b>${money(t.monto)}</b>
+          <div style="text-align:right; flex-shrink:0;">
+            <b style="font-family:var(--font-serif); font-size:16px;">${money(t.monto)}</b>
             <small>${esc(t.pago)}</small>
           </div>
         </div>
       `).join('') : '<div class="vacio">Sin turnos de uñas registrados</div>'}
 
-      <div style="display:flex; gap:8px; margin-top:14px;">
-        <button class="mini btn-sec" style="flex:1" onclick="$('perfil').innerHTML=''">Cerrar ficha</button>
-        <button class="mini danger" onclick="eliminarClienta('${c.id}')">Eliminar clienta</button>
+      <div style="display:flex; gap:8px; margin-top:16px;">
+        <button class="mini btn-sec" style="flex:1; padding:10px;" onclick="$('perfil').innerHTML=''">Cerrar ficha</button>
+        <button class="mini danger" style="padding:10px 14px;" onclick="eliminarClienta('${c.id}')">Eliminar clienta</button>
       </div>
     </div>
   `;
@@ -585,18 +586,18 @@ function verHistorial() {
     ${c && c.alerta ? `
       <div class="alerta-box">
         <span>⚠️</span>
-        <div><strong>Alerta Capilar:</strong> ${esc(c.alerta)}</div>
+        <div><strong>Diagnóstico / Alerta Capilar:</strong> ${esc(c.alerta)}</div>
       </div>
     ` : ''}
     <div class="resumen-cabecera">
-      <small>Última fórmula aplicada${u ? ' · ' + esc(u.fecha) : ''}</small>
+      <small>Última receta aplicada${u ? ' · ' + esc(u.fecha) : ''}</small>
       ${u ? `
-        <div style="font-size:15px; font-weight:800; margin-top:4px;">${esc(u.servicio)}</div>
+        <div style="font-family:var(--font-serif); font-size:17px; font-weight:700; margin-top:5px;">${esc(u.servicio)}</div>
         <div class="formula-tag">🧪 ${esc(u.formula || 'Sin fórmula')}</div>
-        <button class="mini" style="margin-top:8px; background:#ffffff; color:var(--p);" onclick="repetirFormula('${esc(u.formula)}')">
-          🔄 Usar esta misma fórmula
+        <button class="btn-repeat" onclick="repetirFormula('${esc(u.formula)}')">
+          🔄 Usar esta misma fórmula hoy
         </button>
-      ` : '<div style="margin-top:4px;">Primera visita de esta clienta 🌟</div>'}
+      ` : '<div style="margin-top:6px; font-size:13px;">Primera visita de esta clienta en el salón ✨</div>'}
     </div>`;
 }
 
@@ -909,8 +910,8 @@ function calRender() {
     new Date(calFecha + 'T12:00:00').toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'short' });
 
   const manicuristas = [
-    { key: 'katya', nombre: '💅 Katya', bg: '#fdf0f9', col: '#c026d3' },
-    { key: 'gisel', nombre: '✨ Gisel', bg: '#f3eefc', col: '#7c3aed' }
+    { key: 'katya', nombre: '💅 Katya (Mesa 1)', bg: '#fdf2f6', col: '#a83868' },
+    { key: 'gisel', nombre: '✨ Gisel (Mesa 2)', bg: '#f6f2fb', col: '#644190' }
   ];
 
   const dia = turnos.filter(t => t.fecha === calFecha);
@@ -990,25 +991,25 @@ function cargarReporte() {
 
   $('repCont').innerHTML = `
     <div class="kpis">
-      <div class="kpi"><small>Peluquería</small><big>${money(peluq)}</big><small>${vs.length} atenciones</small></div>
-      <div class="kpi verde"><small>Comisiones Uñas (40%)</small><big>${money(aCobrarYamina)}</big><small>A cobrar chicas</small></div>
-      <div class="kpi"><small>Tu Ganancia Total</small><big>${money(peluq + aCobrarYamina)}</big></div>
-      <div class="kpi"><small>Ticket Promedio</small><big>${money(ticketPromedio)}</big></div>
+      <div class="kpi rose"><small>Peluquería (100%)</small><big>${money(peluq)}</big><small>${vs.length} atenciones</small></div>
+      <div class="kpi verde"><small>Comisiones Uñas (40%)</small><big>${money(aCobrarYamina)}</big><small>${ts.length} turnos</small></div>
+      <div class="kpi noir"><small>Ganancia Total</small><big>${money(peluq + aCobrarYamina)}</big><small>Caja neta</small></div>
+      <div class="kpi"><small>Ticket Promedio</small><big>${money(ticketPromedio)}</big><small>Peluquería</small></div>
     </div>
 
     <div class="card">
-      <h3>🏆 Ranking de Trabajos Realizados</h3>
+      <h3>🏆 Servicios Más Solicitados</h3>
       ${rankingList.length ? rankingList.map(([serv, cant], idx) => `
         <div class="item">
-          <div><b>${idx + 1}° ${esc(serv)}</b></div>
-          <div><strong style="color:var(--p); font-size:14px;">${cant}</strong> <small style="display:inline;">veces</small></div>
+          <div><b>${idx + 1}. ${esc(serv)}</b></div>
+          <div><span class="mini" style="pointer-events:none;">${cant} ${cant === 1 ? 'atención' : 'atenciones'}</span></div>
         </div>
-      `).join('') : '<div class="vacio">Sin trabajos en este período</div>'}
+      `).join('') : '<div class="vacio">Sin servicios registrados en este período</div>'}
     </div>
 
     <div class="card">
-      <h3>📲 Resumen y Rendiciones para WhatsApp</h3>
-      <p style="font-size:12px; color:var(--txt-muted); margin-top:-6px;">Tocá el botón para enviar directamente el mensaje de rendición a cada chica:</p>
+      <h3>📲 Liquidación de Comisiones por WhatsApp</h3>
+      <p class="section-sub">Enviá con un toque el detalle de turnos y el 40% que corresponde transferir al salón:</p>
       ${['katya', 'gisel'].map(k => {
         const p = PERSONAS[k];
         const misT = ts.filter(t => t.mId === k);
@@ -1016,20 +1017,21 @@ function cargarReporte() {
         const aYamina = comisionDuena(tot);
         const su60 = gananciaChica(tot);
         return `
-          <div style="background:#fbf6f8; border:1px solid #ebd9e2; border-radius:14px; padding:12px; margin-bottom:10px;">
+          <div class="wpp-card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <b>${p.icono} ${p.nombre}</b>
-              <span style="font-size:14px; font-weight:800;">Cobró: ${money(tot)}</span>
+              <b style="font-family:var(--font-serif); font-size:17px;">${p.icono} ${p.nombre}</b>
+              <span style="font-size:13px; font-weight:700; color:var(--txt-sec);">Recaudó: ${money(tot)} (${misT.length} turnos)</span>
             </div>
-            <div style="font-size:13px; margin-top:4px; color:#554a50;">
-              Su 60%: <strong style="color:var(--g);">${money(su60)}</strong> | <strong style="color:var(--p);">A transferir a Yamina (40%): ${money(aYamina)}</strong>
+            <div style="font-size:13px; margin-top:6px; color:var(--txt-sec); display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+              <span>Su ganancia (60%): <strong style="color:var(--g);">${money(su60)}</strong></span>
+              <span>A rendir a Yamina (40%): <strong style="color:var(--p); font-size:14px;">${money(aYamina)}</strong></span>
             </div>
-            <div style="display:flex; gap:6px; margin-top:10px;">
-              <button class="mini" style="flex:1;" onclick="enviarWpp('${p.nombre}', ${misT.length}, ${tot}, ${su60}, ${aYamina})">
-                📲 Abrir en WhatsApp
+            <div style="display:flex; gap:8px; margin-top:12px;">
+              <button class="mini noir-btn" style="flex:1; padding:9px;" onclick="enviarWpp('${p.nombre}', ${misT.length}, ${tot}, ${su60}, ${aYamina})">
+                📲 Enviar por WhatsApp
               </button>
-              <button class="mini btn-sec" onclick="copiarWpp('${p.nombre}', ${misT.length}, ${tot}, ${su60}, ${aYamina})">
-                📋 Copiar texto
+              <button class="mini btn-sec" style="padding:9px 14px;" onclick="copiarWpp('${p.nombre}', ${misT.length}, ${tot}, ${su60}, ${aYamina})">
+                📋 Copiar
               </button>
             </div>
           </div>
@@ -1038,30 +1040,31 @@ function cargarReporte() {
     </div>
 
     <div class="card">
-      <h3>⚠️ Radar de Clientas Inactivas (>45 días)</h3>
+      <h3>🌸 Radar de Clientas Inactivas (+45 días)</h3>
+      <p class="section-sub">Clientas que no registran visitas recientes para recuperar por WhatsApp</p>
       ${inactivas.length ? inactivas.map(c => `
         <div class="item">
           <div>
             <b>${esc(c.nombre)}</b>
-            <small>Hace ${c.dias} días que no viene (Última: ${esc(c.ult)})</small>
+            <small>Hace ${c.dias} días sin visita (Última: ${esc(c.ult)})</small>
           </div>
           <div>
-            ${c.tel ? `<button class="mini" onclick="abrirWppClienta('${esc(c.tel)}', '${esc(c.nombre)}')">💬 Escribir</button>` : ''}
+            ${c.tel ? `<button class="mini excel-btn" onclick="abrirWppClienta('${esc(c.tel)}', '${esc(c.nombre)}')">💬 Contactar</button>` : ''}
           </div>
         </div>
-      `).join('') : '<div class="vacio">¡Ninguna clienta lleva más de 45 días sin venir! 🎉</div>'}
+      `).join('') : '<div class="vacio">¡Todas las clientas están al día con sus visitas! ✨</div>'}
     </div>
   `;
 }
 
 function armarTextoWpp(nombre, cant, tot, su60, aYamina) {
-  return `💇‍♀️ *SALÓN & NAILS* · Rendición de Uñas\n\n` +
-         `¡Hola ${nombre}! Te paso el resumen:\n` +
-         `✨ Turnos realizados: ${cant}\n` +
-         `💵 Total que cobraste: $${tot.toLocaleString('es-AR')}\n\n` +
-         `🎉 *Tu ganancia (60%): $${su60.toLocaleString('es-AR')}*\n` +
-         `🏛️ *A transferir a Yamina (40% salón): $${aYamina.toLocaleString('es-AR')}*\n\n` +
-         `¡Gracias por tu trabajo! 🙌💖`;
+  return `✂️ *OLALÁ ESTILISTA* · Rendición de Manicuría\n\n` +
+         `¡Hola ${nombre}! Te comparto el resumen del período:\n` +
+         `💅 Turnos realizados: ${cant}\n` +
+         `💵 Total cobrado: $${tot.toLocaleString('es-AR')}\n\n` +
+         `✨ *Tu ganancia (60%): $${su60.toLocaleString('es-AR')}*\n` +
+         `🏛️ *A rendir a Yamina (40% salón): $${aYamina.toLocaleString('es-AR')}*\n\n` +
+         `¡Muchas gracias! 🌸`;
 }
 
 function enviarWpp(nombre, cant, tot, su60, aYamina) {

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>OLALÁ Estilista · Gestión de Salón</title>
-<meta name="theme-color" content="#faf7f8">
+<title>OLALÁ Estilista · Atelier & Gestión</title>
+<meta name="theme-color" content="#f8dfe4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Olalá Estilista">
@@ -13,63 +13,68 @@
 </head>
 <body>
 
-<!-- PANTALLA DE SELECCIÓN DE USUARIO (SPLASH OLALÁ) -->
+<!-- PANTALLA DE SELECCIÓN DE USUARIO (SPLASH MAISON OLALÁ) -->
 <div id="splash-login">
   <div class="splash-box">
-    <div class="splash-logo-wrap">
-      <img src="./logo.png" alt="Olalá Estilista">
+    <div class="splash-hero">
+      <div class="splash-logo-wrap">
+        <img src="./logo.png" alt="OLALÁ Estilista">
+      </div>
     </div>
-    <h1>OLALÁ</h1>
-    <span class="splash-sub">E S T I L I S T A</span>
-    <p class="splash-desc">Gestión integral de peluquería, manicuría y fichas técnicas</p>
-    
+
+    <span class="splash-section-lbl">Seleccioná tu perfil de acceso</span>
+
     <div class="user-cards">
       <!-- Yamina -->
       <button class="user-btn" onclick="solicitarPin('yamina')">
-        <div class="user-avatar" style="background-color:#fcebf2; color:#d25d88;">💇‍♀️</div>
+        <div class="user-avatar" style="background-color:#f8dfe4; color:#8a384f;">💇‍♀️</div>
         <div class="user-info">
           <b>Yamina</b>
-          <span>Dueña · Peluquería & Rindes</span>
+          <span>Dirección · Colorimetría & Caja</span>
         </div>
-        <span class="badge-role" style="background-color:#fcebf2; color:#d25d88;">🔒 PIN 1234</span>
+        <span class="badge-role" style="background-color:#161416; color:#ffffff;">Dueña ›</span>
       </button>
 
       <!-- Katya -->
       <button class="user-btn" onclick="solicitarPin('katya')">
-        <div class="user-avatar" style="background-color:#faf5ff; color:#9333ea;">💅</div>
+        <div class="user-avatar" style="background-color:#fceef5; color:#a83868;">💅</div>
         <div class="user-info">
           <b>Katya</b>
-          <span>Manicurista · Mesa 1</span>
+          <span>Nail Studio · Mesa Compartida 1</span>
         </div>
-        <span class="badge-role" style="background-color:#faf5ff; color:#9333ea;">🔒 PIN 1111</span>
+        <span class="badge-role" style="background-color:#fceef5; color:#8a384f;">Uñas ›</span>
       </button>
 
       <!-- Gisel -->
       <button class="user-btn" onclick="solicitarPin('gisel')">
-        <div class="user-avatar" style="background-color:#f5f3ff; color:#6366f1;">✨</div>
+        <div class="user-avatar" style="background-color:#f4effa; color:#644190;">✨</div>
         <div class="user-info">
           <b>Gisel</b>
-          <span>Manicurista · Mesa 2</span>
+          <span>Nail Studio · Mesa Compartida 2</span>
         </div>
-        <span class="badge-role" style="background-color:#f5f3ff; color:#6366f1;">🔒 PIN 2222</span>
+        <span class="badge-role" style="background-color:#f4effa; color:#644190;">Uñas ›</span>
       </button>
     </div>
+
+    <p class="splash-Tagline" style="margin-bottom:0; margin-top:16px; font-size:11px; color:var(--txt-muted);">
+      ☁️ Sincronización en tiempo real activa
+    </p>
   </div>
 </div>
 
 <!-- MODAL PARA INGRESAR CONTRASEÑA / PIN -->
 <div id="modal-pin">
   <div class="pin-box">
-    <div id="pin-avatar" style="font-size:38px; margin-bottom:6px;">🔒</div>
+    <div id="pin-avatar" class="pin-avatar-ring">🔒</div>
     <h3 id="pin-user-title">Ingresá tu PIN</h3>
-    <p id="pin-user-desc">Ingresá la contraseña para acceder a tu cuenta</p>
-    <input id="pin-input" class="pin-input" type="password" maxlength="8" placeholder="••••" autocomplete="off">
+    <p id="pin-user-desc">Ingresá tu clave personal para continuar</p>
+    <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="off">
     <div class="pin-actions">
-      <button class="btn btn-sec" style="margin-top:0;" onclick="cerrarModalPin()">Cancelar</button>
-      <button class="btn" style="margin-top:0;" onclick="verificarPin()">Entrar</button>
+      <button class="btn btn-sec" style="margin-top:0;" onclick="cerrarModalPin()">Volver</button>
+      <button class="btn" style="margin-top:0;" onclick="verificarPin()">Ingresar</button>
     </div>
     <div class="pin-hint">
-      <strong>PINs de prueba:</strong> Yamina: <b>1234</b> · Katya: <b>1111</b> · Gisel: <b>2222</b>
+      Accesos rápidos · Yamina: <b>1234</b> · Katya: <b>1111</b> · Gisel: <b>2222</b>
     </div>
   </div>
 </div>
@@ -79,17 +84,19 @@
   <div class="brand-header">
     <img src="./logo.png" alt="Olalá" class="brand-header-img">
     <div class="brand-header-titles">
-      <div style="display:flex; align-items:center; gap:5px;">
+      <div style="display:flex; align-items:center; gap:7px;">
         <span class="brand-name">OLALÁ</span>
-        <span id="h-user" class="user-current-pill">· Salón & Nails</span>
+        <span id="h-user" class="user-current-pill">Estilista</span>
         <span id="h-icon" style="display:none;"></span>
       </div>
-      <span class="brand-subtitle">Estilista</span>
+      <div class="brand-subtitle-row">
+        <span class="brand-subtitle">Estilista</span>
+      </div>
     </div>
   </div>
-  <div style="display:flex; gap:6px; align-items:center;">
-    <button class="btn-switch" style="background:#ecfdf5 !important; color:#047857 !important; border-color:#a7f3d0; font-weight:700;" onclick="descargarExcelHistoriasClinicas()" title="Descargar Fórmulas a Excel">📊 Excel</button>
-    <button class="btn-switch" onclick="abrirSelectorUsuario()">🔄 Salir</button>
+  <div class="header-actions">
+    <button class="btn-switch excel-pill" onclick="descargarExcelHistoriasClinicas()" title="Descargar Fórmulas a Excel">📊 Excel</button>
+    <button class="btn-switch" onclick="abrirSelectorUsuario()">Salir</button>
   </div>
 </header>
 
@@ -98,9 +105,9 @@
 <main>
   <!-- ===== INICIO / JORNADA ===== -->
   <section id="s-inicio" class="on">
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-      <div class="chips" id="per"></div>
-      <button class="mini" style="background:#087456 !important; color:#ffffff !important; font-weight:700;" onclick="descargarExcelHistoriasClinicas()">📊 Descargar Fórmulas (Excel)</button>
+    <div class="toolbar-top">
+      <div class="chips" id="per" style="margin:0;"></div>
+      <button class="mini excel-btn" onclick="descargarExcelHistoriasClinicas()">📊 Exportar Fórmulas (.csv)</button>
     </div>
     <div id="inicioCont" style="margin-top:10px"></div>
   </section>
@@ -108,90 +115,113 @@
   <!-- ===== CLIENTAS (Yamina) ===== -->
   <section id="s-clientas">
     <div id="perfil"></div>
+
     <div class="card">
       <details id="det_nueva_clienta">
-        <summary style="cursor:pointer; font-weight:800; color:var(--p);">➕ Nueva clienta</summary>
-        <label>Nombre y Apellido (*)</label><input id="c_nombre" placeholder="Ej: Marcela López">
-        <div class="row2">
-          <div><label>Teléfono (WhatsApp)</label><input id="c_tel" inputmode="tel" placeholder="11 2345-6789"></div>
-          <div><label>Cumpleaños</label><input id="c_cumple" type="date"></div>
+        <summary style="cursor:pointer; font-weight:700; color:var(--txt); font-family:var(--font-serif); font-size:17px;">
+          <span>✨ Registrar Nueva Clienta</span>
+          <span class="mini" style="pointer-events:none;">+ Abrir</span>
+        </summary>
+        <div style="margin-top:12px; border-top:1px solid var(--border); padding-top:6px;">
+          <label>Nombre y Apellido (*)</label>
+          <input id="c_nombre" placeholder="Ej: Marcela López">
+          <div class="row2">
+            <div>
+              <label>Teléfono (WhatsApp)</label>
+              <input id="c_tel" inputmode="tel" placeholder="11 2345-6789">
+            </div>
+            <div>
+              <label>Cumpleaños</label>
+              <input id="c_cumple" type="date">
+            </div>
+          </div>
+          <label>Diagnóstico / Alerta Capilar</label>
+          <input id="c_alerta" placeholder="Ej: Sensible a amoníaco, decoloración previa, pelo poroso...">
+          <label>Notas de Estilo & Preferencias</label>
+          <input id="c_obs" placeholder="Clienta frecuente, tono 7.1 habitual, prefiere agua tibia...">
+          <button class="btn" onclick="guardarClienta()">Guardar Ficha de Clienta</button>
         </div>
-        <label>Alerta Capilar / Cuero cabelludo</label>
-        <input id="c_alerta" placeholder="Ej: Sensible a amoníaco, decoloración previa, pelo poroso...">
-        <label>Observaciones generales</label>
-        <input id="c_obs" placeholder="Clienta frecuente, tono 7.1 habitual...">
-        <button class="btn" onclick="guardarClienta()">Guardar clienta</button>
       </details>
     </div>
+
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <label style="margin:0;">Buscar clienta:</label>
-        <button class="mini btn-sec" style="font-size:11px;" onclick="descargarExcelClientas()">📊 Exportar a Excel</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div>
+          <h3 style="margin:0;">Directorio de Clientas</h3>
+          <p class="section-sub" style="margin:2px 0 0;">Tocá una clienta para abrir su historia clínica completa</p>
+        </div>
+        <button class="mini excel-btn" onclick="descargarExcelClientas()">📊 Excel</button>
       </div>
-      <input id="buscar" placeholder="🔍 Escribí un nombre o teléfono..." style="margin-top:8px;">
-      <div id="listaClientas" style="margin-top:10px"></div>
+      <input id="buscar" placeholder="🔍 Buscar por nombre o teléfono...">
+      <div id="listaClientas" style="margin-top:12px"></div>
     </div>
   </section>
 
   <!-- ===== VISITA PELUQUERÍA (Yamina - Ficha Técnica Dinámica) ===== -->
   <section id="s-visita">
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <label style="margin:0;">Clienta en el salón</label>
-        <button class="mini" style="background:#087456; color:#ffffff; font-weight:700;" onclick="descargarExcelHistoriasClinicas()">📊 Descargar Fórmulas a Excel</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div>
+          <h3 style="margin:0;">Historia Clínica en Salón</h3>
+          <p class="section-sub" style="margin:2px 0 0;">Seleccioná a la clienta para revisar su última fórmula</p>
+        </div>
+        <button class="mini excel-btn" onclick="descargarExcelHistoriasClinicas()">📊 Descargar Excel</button>
       </div>
-      <input id="v_buscar" placeholder="🔍 Escribí para filtrar clienta...">
-      <select id="v_clienta" style="margin-top:6px"></select>
-      <div id="historial" style="margin-top:12px"></div>
+      <input id="v_buscar" placeholder="🔍 Filtrar clienta por nombre...">
+      <select id="v_clienta" style="margin-top:8px"></select>
+      <div id="historial" style="margin-top:14px"></div>
     </div>
 
     <div class="card">
-      <h3>Nueva Atención de Peluquería</h3>
-      
+      <h3>✂️ Nueva Atención & Receta Técnica</h3>
+      <p class="section-sub">Cargá los gramos, tonos y oxidantes exactos para el historial</p>
+
       <!-- Selector de Tipo de Servicio Técnico -->
-      <label>Tipo de Trabajo Realizado:</label>
+      <label>Servicio Realizado</label>
       <div class="chips" id="v_serv_chips"></div>
 
       <!-- Contenedor dinámico según el servicio elegido -->
       <div id="seccion_tecnica_dinamica"></div>
 
       <!-- Productos de Venta al Público opcionales -->
-      <div style="margin-top:14px; border-top:1px dashed var(--border); padding-top:10px;">
+      <div style="margin-top:16px; border-top:1px dashed var(--p-rose-border); padding-top:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <label style="margin:0;">Venta de Productos (opcional):</label>
-          <button type="button" class="mini" onclick="agregarProductoVenta()">➕ [+] Producto</button>
+          <label style="margin:0;">🛍️ Venta de Productos de Salón (opcional)</label>
+          <button type="button" class="mini" onclick="agregarProductoVenta()">+ Agregar producto</button>
         </div>
-        <div id="f_productos"></div>
+        <div id="f_productos" style="margin-top:8px;"></div>
       </div>
 
       <!-- Cobro y Medio de Pago -->
-      <label>Monto Total a Cobrar ($):</label>
-      <input id="v_total" type="number" placeholder="Ej: 35000">
+      <div style="margin-top:16px; border-top:1px solid var(--border); padding-top:4px;">
+        <label>Monto Total a Cobrar ($)</label>
+        <input id="v_total" type="number" placeholder="Ej: 35000">
 
-      <label>Forma de Pago:</label>
-      <select id="v_pago_tipo" onchange="togglePagoMixto()">
-        <option value="simple">Pago Simple (un solo medio)</option>
-        <option value="mixto">Pago Mixto (ej: Efectivo + Transferencia)</option>
-      </select>
+        <label>Modalidad de Pago</label>
+        <select id="v_pago_tipo" onchange="togglePagoMixto()">
+          <option value="simple">Pago Simple (un solo medio)</option>
+          <option value="mixto">Pago Mixto (Efectivo + Transferencia)</option>
+        </select>
 
-      <div id="caja_pago_simple" style="margin-top:6px;">
-        <div class="chips" id="v_pago"></div>
-      </div>
+        <div id="caja_pago_simple" style="margin-top:8px;">
+          <div class="chips" id="v_pago"></div>
+        </div>
 
-      <div id="caja_pago_mixto" style="display:none; margin-top:8px; background:#fdf8fa; border:1px solid #ebd9e2; border-radius:12px; padding:10px;">
-        <div class="row2">
-          <div>
-            <label style="margin-top:0;">Efectivo ($):</label>
-            <input id="v_pago_efectivo" type="number" placeholder="Ej: 20000">
-          </div>
-          <div>
-            <label style="margin-top:0;">Transferencia ($):</label>
-            <input id="v_pago_transf" type="number" placeholder="Ej: 15000">
+        <div id="caja_pago_mixto" style="display:none; margin-top:10px; background:var(--p-rose-soft); border:1px solid var(--p-rose-border); border-radius:16px; padding:12px;">
+          <div class="row2">
+            <div>
+              <label style="margin-top:0;">Efectivo ($)</label>
+              <input id="v_pago_efectivo" type="number" placeholder="Ej: 20000" style="background:#fff !important;">
+            </div>
+            <div>
+              <label style="margin-top:0;">Transferencia ($)</label>
+              <input id="v_pago_transf" type="number" placeholder="Ej: 15000" style="background:#fff !important;">
+            </div>
           </div>
         </div>
       </div>
 
-      <button class="btn" onclick="guardarVisita()">Registrar Atención y Guardar Ficha</button>
+      <button class="btn" onclick="guardarVisita()">Guardar Atención y Fórmula Técnica</button>
     </div>
   </section>
 
@@ -200,53 +230,55 @@
     <!-- Alerta de superposición en mesa compartida -->
     <div id="aviso_mesa" class="alerta-box" style="display:none;">
       <span>⚠️</span>
-      <div><strong>Alerta de Mesa Compartida:</strong> Hay dos turnos superpuestos a la misma hora entre Katya y Gisel.</div>
+      <div><strong>Mesa Compartida Ocupada:</strong> Hay dos turnos superpuestos en el mismo horario entre Katya y Gisel.</div>
     </div>
 
     <div class="card">
       <div class="cal-top">
-        <button class="mini" onclick="calMover(-1)">◀ Día anterior</button>
-        <strong id="calLbl" style="color:var(--p); font-size:14px;">Hoy</strong>
-        <button class="mini" onclick="calMover(1)">Día siguiente ▶</button>
+        <button class="mini" onclick="calMover(-1)">◀ Anterior</button>
+        <strong id="calLbl" class="cal-date-title">Hoy</strong>
+        <button class="mini" onclick="calMover(1)">Siguiente ▶</button>
       </div>
       <div id="calCont"></div>
     </div>
 
     <div class="card">
-      <h3>Agendar Turno de Uñas</h3>
+      <h3>💅 Registrar Turno de Manicuría</h3>
+      <p class="section-sub">Cálculo automático de comisión 60% Manicurista / 40% Salón</p>
+
       <div class="row2">
         <div><label>Fecha</label><input id="t_fecha" type="date"></div>
-        <div><label>Hora Inicio</label><input id="t_inicio" type="time"></div>
+        <div><label>Hora de Inicio</label><input id="t_inicio" type="time"></div>
       </div>
 
       <div class="row2">
         <div>
-          <label>Duración</label>
+          <label>Duración Estimada</label>
           <div class="chips" id="t_dur"></div>
         </div>
         <div>
-          <label>Hora Fin (calculada)</label>
-          <input id="t_fin" type="time" readonly style="background:#faf5f8;">
+          <label>Finalización</label>
+          <input id="t_fin" type="time" readonly>
         </div>
       </div>
 
       <div id="t_manic_box" style="display:none">
-        <label>Manicurista:</label>
+        <label>Profesional en Mesa</label>
         <div class="chips" id="t_manic"></div>
       </div>
 
-      <label>Clienta:</label>
+      <label>Clienta</label>
       <select id="t_clienta"></select>
-      <input id="t_clienta_manual" placeholder="O escribir nombre si es clienta nueva..." style="margin-top:6px">
+      <input id="t_clienta_manual" placeholder="O escribí el nombre si es clienta nueva..." style="margin-top:8px">
 
-      <label>Servicio Realizado:</label>
+      <label>Servicio de Uñas</label>
       <div class="chips" id="t_trab"></div>
-      <input id="t_detalle" placeholder="Detalle (ej: diseño french, baby boomer, strass)..." style="margin-top:4px">
+      <input id="t_detalle" placeholder="Detalle de diseño (ej: French blanca, baby boomer, strass)..." style="margin-top:6px">
 
       <div class="row2">
         <div>
-          <label>Monto Total ($)</label>
-          <input id="t_monto" type="number" placeholder="Ej: 12000">
+          <label>Total Cobrado ($)</label>
+          <input id="t_monto" type="number" placeholder="Ej: 15000">
         </div>
         <div>
           <label>Medio de Pago</label>
@@ -255,29 +287,39 @@
       </div>
 
       <!-- Preview de comisiones 60/40 en vivo -->
-      <div id="previewComision" style="margin-top:10px; background:#fbf2f6; border:1px solid #edd5e2; border-radius:12px; padding:10px; font-size:13px;">
-        <div>Tu 60% (Ganancia): <strong id="prev60" style="color:var(--g);">$0</strong></div>
-        <div>40% Salón (Yamina): <strong id="prev40" style="color:var(--p);">$0</strong></div>
+      <div id="previewComision" class="split-preview-box">
+        <div>
+          <span style="color:var(--txt-sec); font-size:11.5px; display:block;">Tu ganancia (60%)</span>
+          <strong id="prev60" style="color:var(--g); font-size:18px; font-family:var(--font-serif);">$0</strong>
+        </div>
+        <div style="text-align:right;">
+          <span style="color:var(--txt-sec); font-size:11.5px; display:block;">40% Salón (Yamina)</span>
+          <strong id="prev40" style="color:var(--p); font-size:18px; font-family:var(--font-serif);">$0</strong>
+        </div>
       </div>
 
-      <button class="btn" onclick="guardarTurno()">Guardar Turno</button>
+      <button class="btn" onclick="guardarTurno()">Agendar y Registrar Turno</button>
     </div>
   </section>
 
   <!-- ===== REPORTES Y RINDES (Yamina) ===== -->
   <section id="s-reportes">
-    <div class="chips" id="rep_per"></div>
+    <div class="toolbar-top">
+      <div class="chips" id="rep_per" style="margin:0;"></div>
+      <button class="mini excel-btn" onclick="descargarExcelHistoriasClinicas()">📊 Descargar Excel</button>
+    </div>
     <div id="repCont"></div>
 
     <div class="card" style="margin-top:14px;">
-      <h3>⚙️ Ajustes & Respaldo Total</h3>
+      <h3>⚙️ Respaldo & Seguridad</h3>
+      <p class="section-sub">Descargá las planillas para abrir en Excel o cambiá tu clave de ingreso</p>
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-        <button class="mini" style="flex:1; background:#087456; color:#ffffff; font-weight:700; padding:10px;" onclick="descargarExcelHistoriasClinicas()">📊 Descargar Fórmulas a Excel (.csv)</button>
-        <button class="mini btn-sec" style="flex:1; padding:10px;" onclick="descargarExcelClientas()">👩 Descargar Clientas a Excel</button>
+        <button class="mini excel-btn" style="flex:1; padding:11px;" onclick="descargarExcelHistoriasClinicas()">📊 Fórmulas de Peluquería (.csv)</button>
+        <button class="mini btn-sec" style="flex:1; padding:11px;" onclick="descargarExcelClientas()">👩 Directorio de Clientas (.csv)</button>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="mini" style="flex:1;" onclick="descargarBackup()">📥 Copia Completa (JSON)</button>
-        <button class="mini btn-sec" style="flex:1;" onclick="cambiarMiPin()">🔑 Modificar mi PIN</button>
+        <button class="mini" style="flex:1; padding:10px;" onclick="descargarBackup()">📥 Copia Completa (JSON)</button>
+        <button class="mini btn-sec" style="flex:1; padding:10px;" onclick="cambiarMiPin()">🔑 Cambiar mi PIN</button>
       </div>
     </div>
   </section>
