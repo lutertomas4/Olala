@@ -215,8 +215,8 @@ function iniciarSesion(key) {
   U = { key, ...PERSONAS[key] };
   $('splash-login').style.display = 'none';
 
-  $('h-icon').textContent = U.icono;
-  $('h-user').textContent = U.nombre + (U.rol === 'duena' ? ' (Dueña)' : ' (Uñas)');
+  if ($('h-icon')) $('h-icon').textContent = U.icono;
+  if ($('h-user')) $('h-user').textContent = '· ' + U.nombre + (U.rol === 'duena' ? ' (Dueña)' : ' (Uñas)');
 
   const banner = $('banner-modo');
   if (U.rol === 'duena') {

@@ -3,50 +3,55 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Salón & Nails · Gestión Integral</title>
-<meta name="theme-color" content="#b84a7a">
+<title>OLALÁ Estilista · Gestión de Salón</title>
+<meta name="theme-color" content="#faf7f8">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Salón CRM">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23b84a7a'/><text y='68' x='50' font-size='60' text-anchor='middle'>💇‍♀️</text></svg>">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Olalá Estilista">
+<link rel="icon" type="image/png" href="./logo.png">
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 
-<!-- PANTALLA DE SELECCIÓN DE USUARIO (SPLASH) -->
+<!-- PANTALLA DE SELECCIÓN DE USUARIO (SPLASH OLALÁ) -->
 <div id="splash-login">
   <div class="splash-box">
-    <h1>💇‍♀️ Salón & Nails</h1>
-    <p>Seleccioná tu usuario para ingresar al sistema:</p>
+    <div class="splash-logo-wrap">
+      <img src="./logo.png" alt="Olalá Estilista">
+    </div>
+    <h1>OLALÁ</h1>
+    <span class="splash-sub">E S T I L I S T A</span>
+    <p class="splash-desc">Gestión integral de peluquería, manicuría y fichas técnicas</p>
+    
     <div class="user-cards">
       <!-- Yamina -->
       <button class="user-btn" onclick="solicitarPin('yamina')">
-        <div class="user-avatar" style="background-color:#fce7f3; color:#b84a7a;">💇‍♀️</div>
+        <div class="user-avatar" style="background-color:#fcebf2; color:#d25d88;">💇‍♀️</div>
         <div class="user-info">
-          <b>Yamina (Mamá)</b>
+          <b>Yamina</b>
           <span>Dueña · Peluquería & Rindes</span>
         </div>
-        <span class="badge-role" style="background-color:#fce7f3; color:#b84a7a;">🔒 PIN 1234</span>
+        <span class="badge-role" style="background-color:#fcebf2; color:#d25d88;">🔒 PIN 1234</span>
       </button>
 
       <!-- Katya -->
       <button class="user-btn" onclick="solicitarPin('katya')">
-        <div class="user-avatar" style="background-color:#fae8ff; color:#c026d3;">💅</div>
+        <div class="user-avatar" style="background-color:#faf5ff; color:#9333ea;">💅</div>
         <div class="user-info">
           <b>Katya</b>
           <span>Manicurista · Mesa 1</span>
         </div>
-        <span class="badge-role" style="background-color:#fae8ff; color:#c026d3;">🔒 PIN 1111</span>
+        <span class="badge-role" style="background-color:#faf5ff; color:#9333ea;">🔒 PIN 1111</span>
       </button>
 
       <!-- Gisel -->
       <button class="user-btn" onclick="solicitarPin('gisel')">
-        <div class="user-avatar" style="background-color:#ede9fe; color:#7c3aed;">✨</div>
+        <div class="user-avatar" style="background-color:#f5f3ff; color:#6366f1;">✨</div>
         <div class="user-info">
           <b>Gisel</b>
           <span>Manicurista · Mesa 2</span>
         </div>
-        <span class="badge-role" style="background-color:#ede9fe; color:#7c3aed;">🔒 PIN 2222</span>
+        <span class="badge-role" style="background-color:#f5f3ff; color:#6366f1;">🔒 PIN 2222</span>
       </button>
     </div>
   </div>
@@ -71,10 +76,20 @@
 
 <!-- APP HEADER -->
 <header>
-  <b><span id="h-icon">💇‍♀️</span> <span id="h-user">Salón & Nails</span></b>
+  <div class="brand-header">
+    <img src="./logo.png" alt="Olalá" class="brand-header-img">
+    <div class="brand-header-titles">
+      <div style="display:flex; align-items:center; gap:5px;">
+        <span class="brand-name">OLALÁ</span>
+        <span id="h-user" class="user-current-pill">· Salón & Nails</span>
+        <span id="h-icon" style="display:none;"></span>
+      </div>
+      <span class="brand-subtitle">Estilista</span>
+    </div>
+  </div>
   <div style="display:flex; gap:6px; align-items:center;">
-    <button class="btn-switch" style="background:#d1fae5 !important; color:#065f46 !important; font-weight:800;" onclick="descargarExcelHistoriasClinicas()" title="Descargar Fórmulas a Excel">📊 Excel</button>
-    <button class="btn-switch" onclick="abrirSelectorUsuario()">🔄 Cambiar perfil</button>
+    <button class="btn-switch" style="background:#ecfdf5 !important; color:#047857 !important; border-color:#a7f3d0; font-weight:700;" onclick="descargarExcelHistoriasClinicas()" title="Descargar Fórmulas a Excel">📊 Excel</button>
+    <button class="btn-switch" onclick="abrirSelectorUsuario()">🔄 Salir</button>
   </div>
 </header>
 
