@@ -52,7 +52,7 @@ body {
 }
 
 /* Modal de PIN */
-#modal-pin, #modal-config-db {
+#modal-pin {
   display: none; position: fixed; inset: 0; background: rgba(10, 5, 8, 0.88); backdrop-filter: blur(6px);
   z-index: 120; justify-content: center; align-items: center; padding: 20px;
 }

@@ -86,9 +86,8 @@ function guardarLocalDB(data) {
   } catch(e) { console.error('Error guardando DB local:', e); }
 }
 
-// Sincronización con Supabase al iniciar
+// Sincronización automática con Supabase al iniciar
 async function sincronizarConSupabase() {
-  actualizarBadgeEstado();
   if (!DB_API.isOnline()) return;
 
   try {
@@ -98,46 +97,46 @@ async function sincronizarConSupabase() {
       DB_API.getTurnos()
     ]);
 
-    if (cRemote && cRemote.length) clientas = cRemote;
-    if (vRemote && vRemote.length) visitas = vRemote;
-    if (tRemote && tRemote.length) turnos = tRemote;
+    if (Array.isArray(cRemote) && cRemote.length > 0) clientas = cRemote;
+    if (Array.isArray(vRemote)) visitas = vRemote;
+    if (Array.isArray(tRemote)) turnos = tRemote;
+
+    // Sincronizar PINes y usuarios desde Supabase
+    if (supabaseClient) {
+      const { data: uRemote } = await supabaseClient.from('usuarios').select('*');
+      if (uRemote && uRemote.length) {
+        uRemote.forEach(u => {
+          if (PERSONAS[u.usuario_key]) {
+            PERSONAS[u.usuario_key].pin = u.pin;
+            PERSONAS[u.usuario_key].nombre = u.nombre;
+          }
+        });
+      }
+    }
 
     guardarLocalDB();
     refrescarVistasActuales();
-    toast('☁️ Datos sincronizados con Supabase');
 
     // Activar escucha en tiempo real
     DB_API.subscribeRealtime(
       // Cambio en turnos
       async () => {
         const t = await DB_API.getTurnos();
-        if (t) { turnos = t; guardarLocalDB(); refrescarVistasActuales(); toast('💅 Turnos actualizados en vivo'); }
+        if (Array.isArray(t)) { turnos = t; guardarLocalDB(); refrescarVistasActuales(); toast('💅 Turnos actualizados en vivo'); }
       },
       // Cambio en visitas
       async () => {
         const v = await DB_API.getVisitas();
-        if (v) { visitas = v; guardarLocalDB(); refrescarVistasActuales(); toast('✂️ Visitas actualizadas en vivo'); }
+        if (Array.isArray(v)) { visitas = v; guardarLocalDB(); refrescarVistasActuales(); toast('✂️ Visitas actualizadas en vivo'); }
       },
       // Cambio en clientas
       async () => {
         const c = await DB_API.getClientes();
-        if (c) { clientas = c; guardarLocalDB(); refrescarVistasActuales(); toast('👩 Clientas actualizadas en vivo'); }
+        if (Array.isArray(c)) { clientas = c; guardarLocalDB(); refrescarVistasActuales(); toast('👩 Clientas actualizadas en vivo'); }
       }
     );
   } catch(e) {
     console.error('Error sincronizando Supabase:', e);
-  }
-}
-
-function actualizarBadgeEstado() {
-  const el = $('badge-conexion');
-  if (!el) return;
-  if (DB_API.isOnline()) {
-    el.className = 'status-badge online';
-    el.innerHTML = '<span class="status-dot"></span> Supabase En Línea';
-  } else {
-    el.className = 'status-badge local';
-    el.innerHTML = '<span class="status-dot"></span> Modo Local (Sin nube)';
   }
 }
 
@@ -242,6 +241,9 @@ function cambiarMiPin() {
   if (!nueva || !nueva.trim()) return toast('No se modificó la clave', true);
   PERSONAS[U.key].pin = nueva.trim();
   guardarLocalDB();
+  if (DB_API.isOnline() && supabaseClient) {
+    supabaseClient.from('usuarios').update({ pin: nueva.trim() }).eq('usuario_key', U.key).then();
+  }
   toast('Contraseña actualizada ✔');
 }
 
@@ -1222,39 +1224,6 @@ function descargarBackup() {
   a.download = `salon_backup_${hoy()}.json`;
   a.click();
   toast('Copia de seguridad descargada 📥');
-}
-
-// Modal de configuración de Supabase
-function abrirConfigSupabase() {
-  $('supabase-url-input').value = localStorage.getItem('SALON_SUPABASE_URL') || '';
-  $('supabase-key-input').value = localStorage.getItem('SALON_SUPABASE_KEY') || '';
-  if ($('google-sheets-url-input')) $('google-sheets-url-input').value = localStorage.getItem('SALON_GOOGLE_SHEETS_URL') || '';
-  $('modal-config-db').style.display = 'flex';
-}
-
-function cerrarConfigSupabase() {
-  $('modal-config-db').style.display = 'none';
-}
-
-function guardarConfigSupabase() {
-  const url = $('supabase-url-input').value.trim();
-  const key = $('supabase-key-input').value.trim();
-  const gSheetsUrl = $('google-sheets-url-input') ? $('google-sheets-url-input').value.trim() : '';
-  if (gSheetsUrl) localStorage.setItem('SALON_GOOGLE_SHEETS_URL', gSheetsUrl); else localStorage.removeItem('SALON_GOOGLE_SHEETS_URL');
-
-  if (!url || !key) {
-    localStorage.removeItem('SALON_SUPABASE_URL');
-    localStorage.removeItem('SALON_SUPABASE_KEY');
-    toast('Configuración limpiada, volviendo a modo local');
-  } else {
-    localStorage.setItem('SALON_SUPABASE_URL', url);
-    localStorage.setItem('SALON_SUPABASE_KEY', key);
-    toast('Credenciales de Supabase guardadas ☁️');
-  }
-
-  cerrarConfigSupabase();
-  initSupabase();
-  sincronizarConSupabase();
 }
 
 function restablecerDatosEjemplo() {

@@ -69,49 +69,18 @@
   </div>
 </div>
 
-<!-- MODAL DE CONFIGURACIÓN DE SUPABASE Y GOOGLE DRIVE -->
-<div id="modal-config-db">
-  <div class="pin-box" style="max-width: 440px; text-align: left;">
-    <h3 style="margin-top:0;">⚡ Conectar Nube & Respaldos</h3>
-    <p style="font-size:12px; color:var(--txt-muted);">Sincronización en vivo entre celulares y respaldo automático de fórmulas:</p>
-    
-    <label>Project URL (Supabase):</label>
-    <input id="supabase-url-input" placeholder="https://tu-proyecto.supabase.co">
-
-    <label>Anon Public Key (Supabase):</label>
-    <input id="supabase-key-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
-
-    <hr style="border:0; border-top:1px dashed var(--border); margin:14px 0;">
-    <label style="color:#087456; font-weight:800;">📊 Respaldo Automático a Google Drive (Opcional):</label>
-    <p style="font-size:11px; color:var(--txt-muted); margin:2px 0 6px;">URL de la Web App de Apps Script para guardar una copia en vivo en Sheets:</p>
-    <input id="google-sheets-url-input" placeholder="https://script.google.com/macros/s/.../exec">
-
-    <div class="pin-actions" style="margin-top:14px;">
-      <button class="btn btn-sec" style="margin-top:0;" onclick="cerrarConfigSupabase()">Cancelar</button>
-      <button class="btn" style="margin-top:0;" onclick="guardarConfigSupabase()">Guardar y Conectar</button>
-    </div>
-  </div>
-</div>
-
 <!-- APP HEADER -->
 <header>
   <b><span id="h-icon">💇‍♀️</span> <span id="h-user">Salón & Nails</span></b>
   <div style="display:flex; gap:6px; align-items:center;">
     <button class="btn-switch" style="background:#d1fae5 !important; color:#065f46 !important; font-weight:800;" onclick="descargarExcelHistoriasClinicas()" title="Descargar Fórmulas a Excel">📊 Excel</button>
-    <button class="btn-switch" onclick="abrirConfigSupabase()" title="Configurar conexión en la nube y respaldos">⚡ Nube</button>
-    <button class="btn-switch" onclick="abrirSelectorUsuario()">🔄 Salir</button>
+    <button class="btn-switch" onclick="abrirSelectorUsuario()">🔄 Cambiar perfil</button>
   </div>
 </header>
 
 <div class="banner-modo" id="banner-modo"></div>
 
 <main>
-  <!-- Barra de estado online -->
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-    <span id="badge-conexion" class="status-badge local"><span class="status-dot"></span> Modo Local</span>
-    <button class="mini btn-sec" style="font-size:11px;" onclick="restablecerDatosEjemplo()">🔄 Recargar ejemplos</button>
-  </div>
-
   <!-- ===== INICIO / JORNADA ===== -->
   <section id="s-inicio" class="on">
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
@@ -293,7 +262,6 @@
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="mini" style="flex:1;" onclick="descargarBackup()">📥 Copia Completa (JSON)</button>
-        <button class="mini btn-sec" style="flex:1;" onclick="abrirConfigSupabase()">⚡ Nube & Google Drive</button>
         <button class="mini btn-sec" style="flex:1;" onclick="cambiarMiPin()">🔑 Modificar mi PIN</button>
       </div>
     </div>

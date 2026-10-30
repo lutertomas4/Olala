@@ -2,22 +2,19 @@
 // CLIENTE Y ADAPTADOR DE SUPABASE (SALÓN & NAILS)
 // ==========================================================
 
-// Configuración por defecto (Tu proyecto de Supabase)
-const DEFAULT_SUPABASE_URL = "https://wonjvkeqkbtjyydgfsik.supabase.co";
-const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_eUm_IQCZe3ZTrRqPMf3ozg_MNilEPZ5";
+// Configuración permanente y 100% automática de Supabase
+const SUPABASE_URL = "https://wonjvkeqkbtjyydgfsik.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_eUm_IQCZe3ZTrRqPMf3ozg_MNilEPZ5";
 
 let supabaseClient = null;
 let isOnlineSupabase = false;
 
 function initSupabase() {
-  const url = localStorage.getItem('SALON_SUPABASE_URL') || DEFAULT_SUPABASE_URL;
-  const key = localStorage.getItem('SALON_SUPABASE_KEY') || DEFAULT_SUPABASE_ANON_KEY;
-
-  if (url && key && window.supabase) {
+  if (window.supabase) {
     try {
-      supabaseClient = window.supabase.createClient(url, key);
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       isOnlineSupabase = true;
-      console.log('⚡ Conectado a Supabase en tiempo real');
+      console.log('⚡ Conectado automáticamente a Supabase en tiempo real');
       return true;
     } catch(e) {
       console.error('Error inicializando Supabase:', e);
@@ -32,7 +29,7 @@ function initSupabase() {
 // Inicializar de entrada
 initSupabase();
 
-// API Unificada (Si Supabase está conectado usa PostgreSQL; si no, usa localStorage como fallback)
+// API Unificada de Supabase con fallback local transparente
 const DB_API = {
   isOnline() {
     return isOnlineSupabase && supabaseClient !== null;
@@ -52,9 +49,9 @@ const DB_API = {
           obs: c.observaciones || ''
         }));
       }
-      console.warn('Error leyendo clientes en Supabase, usando local:', error);
+      console.warn('Error leyendo clientes en Supabase:', error);
     }
-    return null; // Fallback
+    return null;
   },
 
   async saveCliente(c) {
@@ -86,6 +83,7 @@ const DB_API = {
         return data.map(v => ({
           id: Number(v.id),
           cid: v.cliente_id,
+          clienta_nombre: v.cliente_nombre || '',
           fecha: v.fecha,
           servicio: v.servicio,
           formula: v.formula || '',
