@@ -157,71 +157,119 @@
     </div>
   </section>
 
-  <!-- ===== VISITA PELUQUERÍA (Yamina - Ficha Técnica Dinámica) ===== -->
+  <!-- ===== VISITA PELUQUERÍA (Yamina - Calendario + Sillón en Vivo + Ficha Técnica) ===== -->
   <section id="s-visita">
+    <!-- PANEL DE ATENCIÓN EN SILLÓN EN VIVO (Se despliega al tocar un turno de peluquería) -->
+    <div id="panel_atencion_pelo"></div>
+
+    <!-- CALENDARIO DE TURNOS DE PELUQUERÍA (YAMINA) -->
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
         <div>
-          <h3 style="margin:0;">Historia Clínica en Salón</h3>
-          <p class="section-sub" style="margin:2px 0 0;">Seleccioná a la clienta para revisar su última fórmula</p>
+          <h3 style="margin:0;">📅 Agenda & Calendario de Peluquería</h3>
+          <p class="section-sub" style="margin:2px 0 0;">Tocá el turno de la clienta para iniciar la atención, ver su última fórmula y cobrar</p>
         </div>
         <button class="mini excel-btn" onclick="descargarExcelHistoriasClinicas()">📊 Descargar Excel</button>
       </div>
-      <input id="v_buscar" placeholder="🔍 Filtrar clienta por nombre...">
-      <select id="v_clienta" style="margin-top:8px"></select>
-      <div id="historial" style="margin-top:14px"></div>
+
+      <div class="cal-top">
+        <button class="mini" onclick="calPeloMover(-1)">◀ Anterior</button>
+        <strong id="calPeloLbl" class="cal-date-title">Hoy</strong>
+        <button class="mini" onclick="calPeloMover(1)">Siguiente ▶</button>
+      </div>
+
+      <div id="cola_pelo_dia" style="margin-bottom:12px;"></div>
+      <div id="calPeloCont"></div>
     </div>
 
+    <!-- AGENDAR TURNO DE PELUQUERÍA O CARGAR FICHA DIRECTA -->
     <div class="card">
-      <h3>✂️ Nueva Atención & Receta Técnica</h3>
-      <p class="section-sub">Cargá los gramos, tonos y oxidantes exactos para el historial</p>
+      <h3>✂️ Agendar Turno o Cargar Ficha de Peluquería</h3>
+      <p class="section-sub">Podés dejar el turno reservado en el calendario o cargarlo ya finalizado con su fórmula</p>
+
+      <div class="row2">
+        <div><label>Fecha del Turno</label><input id="v_fecha" type="date"></div>
+        <div><label>Hora de Inicio</label><input id="v_inicio" type="time"></div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label>Duración Estimada</label>
+          <div class="chips" id="v_dur"></div>
+        </div>
+        <div>
+          <label>Finalización</label>
+          <input id="v_fin" type="time" readonly>
+        </div>
+      </div>
+
+      <label>Clienta</label>
+      <input id="v_buscar" placeholder="🔍 Filtrar clienta de la lista...">
+      <select id="v_clienta" style="margin-top:6px"></select>
+      <input id="v_clienta_manual" placeholder="O escribí el nombre si es clienta nueva..." style="margin-top:6px">
+      <div id="historial" style="margin-top:12px"></div>
 
       <!-- Selector de Tipo de Servicio Técnico -->
-      <label>Servicio Realizado</label>
+      <label>Trabajo a Realizar</label>
       <div class="chips" id="v_serv_chips"></div>
 
-      <!-- Contenedor dinámico según el servicio elegido -->
-      <div id="seccion_tecnica_dinamica"></div>
+      <!-- Botón directo para Agendar en el Calendario -->
+      <button class="btn" style="margin-top:10px;" onclick="guardarVisita('pendiente')">
+        📅 Agendar Turno en el Calendario de Yamina
+      </button>
 
-      <!-- Productos de Venta al Público opcionales -->
-      <div style="margin-top:16px; border-top:1px dashed var(--p-rose-border); padding-top:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <label style="margin:0;">🛍️ Venta de Productos de Salón (opcional)</label>
-          <button type="button" class="mini" onclick="agregarProductoVenta()">+ Agregar producto</button>
-        </div>
-        <div id="f_productos" style="margin-top:8px;"></div>
-      </div>
+      <!-- Desplegable para cargar fórmula técnica y cobro directo en el acto -->
+      <details id="det_carga_directa_pelo" style="margin-top:14px; border-top:1px dashed var(--p-rose-border); padding-top:12px;">
+        <summary style="cursor:pointer; font-weight:700; color:var(--p-rose-deep); font-size:13px;">
+          <span>🧪 ¿Ya la atendiste? Cargar Fórmula Técnica y Cobro ahora mismo</span>
+          <span class="mini" style="pointer-events:none;">Desplegar ›</span>
+        </summary>
 
-      <!-- Cobro y Medio de Pago -->
-      <div style="margin-top:16px; border-top:1px solid var(--border); padding-top:4px;">
-        <label>Monto Total a Cobrar ($)</label>
-        <input id="v_total" type="number" placeholder="Ej: 35000">
+        <div style="margin-top:10px;">
+          <!-- Contenedor dinámico según el servicio elegido -->
+          <div id="seccion_tecnica_dinamica"></div>
 
-        <label>Modalidad de Pago</label>
-        <select id="v_pago_tipo" onchange="togglePagoMixto()">
-          <option value="simple">Pago Simple (un solo medio)</option>
-          <option value="mixto">Pago Mixto (Efectivo + Transferencia)</option>
-        </select>
-
-        <div id="caja_pago_simple" style="margin-top:8px;">
-          <div class="chips" id="v_pago"></div>
-        </div>
-
-        <div id="caja_pago_mixto" style="display:none; margin-top:10px; background:var(--p-rose-soft); border:1px solid var(--p-rose-border); border-radius:16px; padding:12px;">
-          <div class="row2">
-            <div>
-              <label style="margin-top:0;">Efectivo ($)</label>
-              <input id="v_pago_efectivo" type="number" placeholder="Ej: 20000" style="background:#fff !important;">
+          <!-- Productos de Venta al Público opcionales -->
+          <div style="margin-top:16px; border-top:1px dashed var(--p-rose-border); padding-top:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label style="margin:0;">🛍️ Venta de Productos de Salón (opcional)</label>
+              <button type="button" class="mini" onclick="agregarProductoVenta()">+ Agregar producto</button>
             </div>
-            <div>
-              <label style="margin-top:0;">Transferencia ($)</label>
-              <input id="v_pago_transf" type="number" placeholder="Ej: 15000" style="background:#fff !important;">
+            <div id="f_productos" style="margin-top:8px;"></div>
+          </div>
+
+          <!-- Cobro y Medio de Pago -->
+          <div style="margin-top:16px; border-top:1px solid var(--border); padding-top:4px;">
+            <label>Monto Total Cobrado ($)</label>
+            <input id="v_total" type="number" placeholder="Ej: 35000">
+
+            <label>Modalidad de Pago</label>
+            <select id="v_pago_tipo" onchange="togglePagoMixto()">
+              <option value="simple">Pago Simple (un solo medio)</option>
+              <option value="mixto">Pago Mixto (Efectivo + Transferencia)</option>
+            </select>
+
+            <div id="caja_pago_simple" style="margin-top:8px;">
+              <div class="chips" id="v_pago"></div>
+            </div>
+
+            <div id="caja_pago_mixto" style="display:none; margin-top:10px; background:var(--p-rose-soft); border:1px solid var(--p-rose-border); border-radius:16px; padding:12px;">
+              <div class="row2">
+                <div>
+                  <label style="margin-top:0;">Efectivo ($)</label>
+                  <input id="v_pago_efectivo" type="number" placeholder="Ej: 20000" style="background:#fff !important;">
+                </div>
+                <div>
+                  <label style="margin-top:0;">Transferencia ($)</label>
+                  <input id="v_pago_transf" type="number" placeholder="Ej: 15000" style="background:#fff !important;">
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <button class="btn" onclick="guardarVisita()">Guardar Atención y Fórmula Técnica</button>
+          <button class="btn btn-sec" onclick="guardarVisita('cobrado')">✔ Guardar como Ya Finalizada y Cobrada</button>
+        </div>
+      </details>
     </div>
   </section>
 

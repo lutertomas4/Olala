@@ -144,15 +144,17 @@ function refrescarVistasActuales() {
   if (U) {
     if ($('s-inicio').classList.contains('on')) cargarInicio();
     if ($('s-clientas').classList.contains('on')) renderClientas($('buscar').value);
-    if ($('s-visita').classList.contains('on')) filtrarSelect($('v_buscar').value);
+    if ($('s-visita').classList.contains('on')) prepararVisitaPelo();
     if ($('s-turno').classList.contains('on')) { prepararTurno(); calRender(); }
     if ($('s-reportes').classList.contains('on')) cargarReporte();
   }
 }
 
-let U = null, periodo = 'hoy', repPeriodo = 'hoy', calFecha = null, pinUsuarioSeleccionado = null;
+let U = null, periodo = 'hoy', repPeriodo = 'hoy', calFecha = null, calPeloFecha = null, pinUsuarioSeleccionado = null;
 let servicioPeluqueriaActivo = 'Tintura';
+let servicioSillonActivo = 'Tintura';
 let turnoActivoId = null;
+let visitaActivaId = null;
 
 function estadoDeTurno(t) {
   if (!t) return 'pendiente';
@@ -167,6 +169,19 @@ function badgeEstadoTurno(t) {
   const est = estadoDeTurno(t);
   if (est === 'pendiente') return `<span class="estado-pill pendiente">🕒 En espera</span>`;
   if (est === 'en_mesa') return `<span class="estado-pill en-mesa">⏳ En mesa (${esc(t.inicioReal || t.inicio)})</span>`;
+  return `<span class="estado-pill cobrado">✔ Cobrado</span>`;
+}
+
+function estadoDeVisita(v) {
+  if (!v) return 'cobrado';
+  if (v.estado) return v.estado;
+  return 'cobrado';
+}
+
+function badgeEstadoVisita(v) {
+  const est = estadoDeVisita(v);
+  if (est === 'pendiente') return `<span class="estado-pill pendiente">🕒 Turno agendado</span>`;
+  if (est === 'en_sillon') return `<span class="estado-pill en-mesa">⏳ En sillón (${esc(v.inicioReal || v.inicio || '10:00')})</span>`;
   return `<span class="estado-pill cobrado">✔ Cobrado</span>`;
 }
 
@@ -269,7 +284,7 @@ function irA(tab) {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
   if (tab === 'inicio') cargarInicio();
   if (tab === 'clientas') renderClientas($('buscar').value);
-  if (tab === 'visita') filtrarSelect($('v_buscar').value);
+  if (tab === 'visita') prepararVisitaPelo();
   if (tab === 'reportes') cargarReporte();
   if (tab === 'turno') prepararTurno();
 }
@@ -317,7 +332,8 @@ function cargarInicio() {
 
   if (U.rol === 'duena') {
     const vs = visitasPeriodo();
-    const peluq = vs.reduce((s,v) => s + v.total, 0);
+    const vsCobradas = vs.filter(v => estadoDeVisita(v) === 'cobrado');
+    const peluq = vsCobradas.reduce((s,v) => s + v.total, 0);
     const comisionesACobrar = ['katya', 'gisel'].map(k => {
       const p = PERSONAS[k];
       const misT = ts.filter(t => t.mId === k && estadoDeTurno(t) === 'cobrado');
@@ -339,7 +355,7 @@ function cargarInicio() {
 
     $('inicioCont').innerHTML = `
       <div class="kpis">
-        <div class="kpi rose"><small>Peluquería (100% tuya)</small><big>${money(peluq)}</big><small>${vs.length} atenciones</small></div>
+        <div class="kpi rose"><small>Peluquería (100% tuya)</small><big>${money(peluq)}</big><small>${vsCobradas.length} cobradas</small></div>
         <div class="kpi verde"><small>A cobrar uñas (40%)</small><big>${money(totalComisionesYamina)}</big><small>${totalTurnosCobrados} turnos cobrados</small></div>
         <div class="kpi noir"><small>Tu Ganancia Neta</small><big>${money(peluq + totalComisionesYamina)}</big><small>Total salón</small></div>
       </div>
@@ -364,18 +380,22 @@ function cargarInicio() {
       </div>
 
       <div class="card">
-        <h3>✂️ Atenciones de Peluquería (${vs.length})</h3>
+        <h3>✂️ Agenda y Atenciones de Peluquería (${vs.length})</h3>
         ${vs.length ? vs.map(v => {
-          const clienta = clientas.find(c => c.id === v.cid)?.nombre || 'Clienta';
+          const clienta = clientas.find(c => c.id === v.cid)?.nombre || v.clienta_nombre || 'Clienta';
+          const est = estadoDeVisita(v);
           return `
-            <div class="item">
+            <div class="item" style="cursor:pointer;" onclick="irA('visita'); seleccionarVisitaPelo(${v.id});">
               <div>
-                <b>${esc(clienta)}</b> · <span style="color:var(--p-rose-deep); font-weight:700; font-size:13px;">${esc(v.servicio)}</span>
-                <small>${esc(v.fecha)} · ${esc(v.pago)}</small>
-                <div class="formula-pill">🧪 ${esc(v.formula || 'Sin fórmula')}</div>
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <b>${esc(clienta)}</b> · <span style="color:var(--p-rose-deep); font-weight:700; font-size:13px;">${esc(v.servicio)}</span>
+                  ${badgeEstadoVisita(v)}
+                </div>
+                <small>${esc(v.fecha)}${v.inicio ? ` (${v.inicio}–${v.fin})` : ''}${est === 'cobrado' ? ' · ' + esc(v.pago) : ''}</small>
+                ${v.formula ? `<div class="formula-pill">🧪 ${esc(v.formula)}</div>` : ''}
               </div>
-              <div style="text-align:right; flex-shrink:0;">
-                <b style="font-family:var(--font-serif); font-size:16px;">${money(v.total)}</b>
+              <div style="text-align:right; flex-shrink:0;" onclick="event.stopPropagation();">
+                ${est === 'cobrado' ? `<b style="font-family:var(--font-serif); font-size:16px;">${money(v.total)}</b>` : `<button class="mini noir-btn" onclick="irA('visita'); seleccionarVisitaPelo(${v.id});">▶️ Atender</button>`}
                 <br>
                 <button class="mini danger" style="margin-top:6px; font-size:10.5px; padding:4px 9px;" onclick="eliminarVisita(${v.id})">Borrar</button>
               </div>
@@ -613,12 +633,33 @@ async function guardarClienta() {
   filtrarSelect('');
 }
 
-// ---------- VISITA PELUQUERÍA & FORMULARIO CONDICIONAL ----------
+// ---------- VISITA PELUQUERÍA, CALENDARIO YAMINA & SILLÓN EN VIVO ----------
+function prepararVisitaPelo() {
+  filtrarSelect($('v_buscar')?.value || '');
+  if ($('v_fecha') && !$('v_fecha').value) $('v_fecha').value = hoy();
+  if ($('v_inicio') && !$('v_inicio').value) {
+    $('v_inicio').value = horaAhoraTexto();
+  }
+  if ($('v_dur') && !valor($('v_dur'))) elegir($('v_dur'), '90');
+  actualizarFinPelo(duracionPeloActual());
+  if (!calPeloFecha) calPeloFecha = hoy();
+  renderPanelAtencionPelo();
+  calPeloRender();
+}
+
+function duracionPeloActual() { return +valor($('v_dur')) || 90; }
+function actualizarFinPelo(min) {
+  if ($('v_inicio') && $('v_inicio').value && $('v_fin')) {
+    $('v_fin').value = sumarMin($('v_inicio').value, min);
+  }
+}
+
 function filtrarSelect(q) {
   q = (q || '').toLowerCase();
   const sel = $('v_clienta'), actual = sel.value;
-  sel.innerHTML = clientas.filter(c => c.nombre.toLowerCase().includes(q))
-    .map(c => `<option value="${esc(c.id)}">${esc(c.nombre)}</option>`).join('');
+  sel.innerHTML = '<option value="">— Elegir clienta de la lista (o escribir abajo) —</option>' +
+    clientas.filter(c => c.nombre.toLowerCase().includes(q))
+      .map(c => `<option value="${esc(c.id)}">${esc(c.nombre)}</option>`).join('');
   if (actual && sel.querySelector(`option[value="${actual}"]`)) {
     sel.value = actual;
   }
@@ -629,7 +670,7 @@ function verHistorial() {
   const id = $('v_clienta').value;
   if (!id) return $('historial').innerHTML = '';
   const c = clientas.find(x => x.id === id);
-  const vs = visitas.filter(v => v.cid === id).sort((a,b) => a.fecha < b.fecha ? 1 : -1);
+  const vs = visitas.filter(v => v.cid === id && v.formula).sort((a,b) => a.fecha < b.fecha ? 1 : -1);
   const u = vs[0];
 
   $('historial').innerHTML = `
@@ -653,82 +694,93 @@ function verHistorial() {
 
 function repetirFormula(formulaStr) {
   toast('Fórmula previa cargada en la visita ✔');
-  $('seccion_tecnica_dinamica').dataset.formulaRepetida = formulaStr;
+  if ($('seccion_tecnica_dinamica')) $('seccion_tecnica_dinamica').dataset.formulaRepetida = formulaStr;
+  if ($('sillon_formula_manual')) $('sillon_formula_manual').value = formulaStr;
 }
 
-function renderFormularioTecnico() {
-  const s = servicioPeluqueriaActivo;
-  const cont = $('seccion_tecnica_dinamica');
+function renderFormularioTecnico(targetContainerId = 'seccion_tecnica_dinamica', servicio = servicioPeluqueriaActivo, prefix = '') {
+  const s = servicio;
+  const cont = $(targetContainerId);
+  if (!cont) return;
   delete cont.dataset.formulaRepetida;
+
+  const idTint = prefix + 'g_tintura';
+  const idMarca = prefix + 'f_marca';
+  const idOxi = prefix + 'g_oxi';
+  const idDeco = prefix + 'g_deco';
+  const idMatiz = prefix + 'g_matiz';
+  const idProd = prefix + 'g_prod';
+  const idObsTrat = prefix + 'f_obs_trat';
+  const idObsCorte = prefix + 'f_obs_corte';
 
   if (s === 'Tintura') {
     cont.innerHTML = `
       <div class="tecnica-grupo">
         <div class="tecnica-header">
           <span>🎨 Tintura / Mezcla de Color</span>
-          <button type="button" class="mini" onclick="agregarRenglon('g_tintura', 'Nro de tintura (ej: 8.1)', 'Gramos (ej: 45g)')">➕ [+] Tintura</button>
+          <button type="button" class="mini" onclick="agregarRenglon('${idTint}', 'Nro de tintura (ej: 8.1)', 'Gramos (ej: 45g)')">➕ [+] Tintura</button>
         </div>
-        <div id="g_tintura"></div>
+        <div id="${idTint}"></div>
         <label>Marca:</label>
-        <input id="f_marca" placeholder="Ej: Majirel, LOréal, Alfaparf...">
+        <input id="${idMarca}" placeholder="Ej: Majirel, LOréal, Alfaparf...">
       </div>
 
       <div class="tecnica-grupo">
         <div class="tecnica-header">
           <span>💧 Oxidante / Agua</span>
-          <button type="button" class="mini" onclick="agregarRenglon('g_oxi', 'Volumen (ej: 20vol)', 'Gramos / ml (ej: 90g)')">➕ [+] Oxidante</button>
+          <button type="button" class="mini" onclick="agregarRenglon('${idOxi}', 'Volumen (ej: 20vol)', 'Gramos / ml (ej: 90g)')">➕ [+] Oxidante</button>
         </div>
-        <div id="g_oxi"></div>
+        <div id="${idOxi}"></div>
       </div>
     `;
-    agregarRenglon('g_tintura', 'Nro (ej: 7.1)', '45g');
-    agregarRenglon('g_oxi', '20 vol', '90g');
+    agregarRenglon(idTint, 'Nro (ej: 7.1)', '45g');
+    agregarRenglon(idOxi, '20 vol', '90g');
   } else if (s === 'Mechas / Reflejos') {
     cont.innerHTML = `
       <div class="tecnica-grupo">
         <div class="tecnica-header">
           <span>✨ Polvo Decolorante</span>
-          <button type="button" class="mini" onclick="agregarRenglon('g_deco', 'Tipo / Nro (ej: Azul 9 tonos)', 'Gramos (ej: 40g)')">➕ [+] Decolorante</button>
+          <button type="button" class="mini" onclick="agregarRenglon('${idDeco}', 'Tipo / Nro (ej: Azul 9 tonos)', 'Gramos (ej: 40g)')">➕ [+] Decolorante</button>
         </div>
-        <div id="g_deco"></div>
+        <div id="${idDeco}"></div>
       </div>
 
       <div class="tecnica-grupo">
         <div class="tecnica-header">
           <span>🎨 Matizador / Tintura</span>
-          <button type="button" class="mini" onclick="agregarRenglon('g_matiz', 'Tono (ej: 9.21)', 'Gramos (ej: 30g)')">➕ [+] Matizador</button>
+          <button type="button" class="mini" onclick="agregarRenglon('${idMatiz}', 'Tono (ej: 9.21)', 'Gramos (ej: 30g)')">➕ [+] Matizador</button>
         </div>
-        <div id="g_matiz"></div>
+        <div id="${idMatiz}"></div>
       </div>
 
       <div class="tecnica-grupo">
         <div class="tecnica-header">
           <span>💧 Oxidante</span>
-          <button type="button" class="mini" onclick="agregarRenglon('g_oxi', 'Volumen (ej: 30vol o 10vol)', 'Gramos / ml')">➕ [+] Oxidante</button>
+          <button type="button" class="mini" onclick="agregarRenglon('${idOxi}', 'Volumen (ej: 30vol o 10vol)', 'Gramos / ml')">➕ [+] Oxidante</button>
         </div>
-        <div id="g_oxi"></div>
+        <div id="${idOxi}"></div>
       </div>
     `;
-    agregarRenglon('g_deco', 'Azul 9 tonos', '40g');
-    agregarRenglon('g_oxi', '30 vol', '80g');
+    agregarRenglon(idDeco, 'Azul 9 tonos', '40g');
+    agregarRenglon(idOxi, '30 vol', '80g');
   } else if (s === 'Hidratación / Botox' || s === 'Alisado / Keratina') {
     cont.innerHTML = `
       <div class="tecnica-grupo">
         <div class="tecnica-header">
           <span>🧴 Producto Aplicado</span>
-          <button type="button" class="mini" onclick="agregarRenglon('g_prod', 'Marca / Tipo de producto', 'Gramos / ml')">➕ [+] Producto</button>
+          <button type="button" class="mini" onclick="agregarRenglon('${idProd}', 'Marca / Tipo de producto', 'Gramos / ml')">➕ [+] Producto</button>
         </div>
-        <div id="g_prod"></div>
+        <div id="${idProd}"></div>
         <label>Observaciones del tratamiento:</label>
-        <input id="f_obs_trat" placeholder="Ej: Gorro térmico 20 min, enjuague neutro...">
+        <input id="${idObsTrat}" placeholder="Ej: Gorro térmico 20 min, enjuague neutro...">
       </div>
     `;
-    agregarRenglon('g_prod', s === 'Hidratación / Botox' ? 'Botox Nutritivo Argán' : 'Keratina antifrizz', '50g');
+    agregarRenglon(idProd, s === 'Hidratación / Botox' ? 'Botox Nutritivo Argán' : 'Keratina antifrizz', '50g');
   } else {
     cont.innerHTML = `
       <div class="tecnica-grupo">
         <label style="margin-top:0;">Detalle / Observaciones del trabajo:</label>
-        <textarea id="f_obs_corte" rows="2" placeholder="Ej: Corte en capas, flequillo cortina, saneamiento de puntas..."></textarea>
+        <textarea id="${idObsCorte}" rows="2" placeholder="Ej: Corte en capas, flequillo cortina, saneamiento de puntas..."></textarea>
       </div>
     `;
   }
@@ -747,8 +799,9 @@ function agregarRenglon(idCont, placeholder1, placeholder2) {
   c.appendChild(div);
 }
 
-function agregarProductoVenta(nombre = '', precio = '') {
-  const c = $('f_productos');
+function agregarProductoVenta(nombre = '', precio = '', contId = 'f_productos') {
+  const c = $(contId);
+  if (!c) return;
   const div = document.createElement('div');
   div.className = 'tecnica-renglon';
   div.innerHTML = `
@@ -759,15 +812,15 @@ function agregarProductoVenta(nombre = '', precio = '') {
   c.appendChild(div);
 }
 
-function compilarFormulaTexto() {
-  if ($('seccion_tecnica_dinamica').dataset.formulaRepetida) {
+function compilarFormulaTexto(prefix = '', servicio = servicioPeluqueriaActivo, prodContId = 'f_productos') {
+  if (!prefix && $('seccion_tecnica_dinamica')?.dataset.formulaRepetida) {
     return $('seccion_tecnica_dinamica').dataset.formulaRepetida;
   }
-  const s = servicioPeluqueriaActivo;
+  const s = servicio;
   const partes = [];
 
   const leerGrupo = (id, etiqueta) => {
-    const el = $(id);
+    const el = $(prefix + id);
     if (!el) return;
     const items = [];
     el.querySelectorAll('.tecnica-renglon').forEach(r => {
@@ -780,7 +833,7 @@ function compilarFormulaTexto() {
 
   if (s === 'Tintura') {
     leerGrupo('g_tintura', 'Tintura');
-    const marca = $('f_marca')?.value.trim();
+    const marca = $(prefix + 'f_marca')?.value.trim();
     if (marca) partes.push(`(${marca})`);
     leerGrupo('g_oxi', 'Oxidante');
   } else if (s === 'Mechas / Reflejos') {
@@ -789,15 +842,15 @@ function compilarFormulaTexto() {
     leerGrupo('g_oxi', 'Oxidante');
   } else if (s === 'Hidratación / Botox' || s === 'Alisado / Keratina') {
     leerGrupo('g_prod', 'Producto');
-    const obs = $('f_obs_trat')?.value.trim();
+    const obs = $(prefix + 'f_obs_trat')?.value.trim();
     if (obs) partes.push(`Obs: ${obs}`);
   } else {
-    const obs = $('f_obs_corte')?.value.trim();
+    const obs = $(prefix + 'f_obs_corte')?.value.trim();
     if (obs) partes.push(obs);
   }
 
   const prods = [];
-  $('f_productos').querySelectorAll('.tecnica-renglon').forEach(r => {
+  $(prodContId)?.querySelectorAll('.tecnica-renglon').forEach(r => {
     const nom = r.querySelector('.p_nom')?.value.trim();
     const pre = r.querySelector('.p_pre')?.value.trim();
     if (nom) prods.push(`${nom} ($${pre || '0'})`);
@@ -813,44 +866,436 @@ function togglePagoMixto() {
   $('caja_pago_mixto').style.display = tipo === 'mixto' ? 'block' : 'none';
 }
 
-async function guardarVisita() {
-  if (!$('v_clienta').value) return toast('Elegí una clienta', true);
-  if (!$('v_total').value) return toast('Ingresá el monto total', true);
+async function guardarVisita(modoEstado = 'pendiente') {
+  const fecha = $('v_fecha')?.value || hoy();
+  const ini = $('v_inicio')?.value || '10:00';
+  const fin = $('v_fin')?.value || '11:30';
+  const cid = $('v_clienta').value;
+  const manual = $('v_clienta_manual')?.value.trim() || '';
 
-  const formula = compilarFormulaTexto();
-  let metodoPago = valor($('v_pago'));
+  if (!cid && !manual) return toast('Elegí o escribí el nombre de la clienta', true);
+  if (modoEstado === 'cobrado' && !$('v_total').value) return toast('Ingresá el monto cobrado', true);
 
-  if ($('v_pago_tipo').value === 'mixto') {
+  let finalCid = cid;
+  let finalNom = manual;
+  if (!finalCid && manual) {
+    const nuevaC = { id: 'c_' + Date.now(), nombre: manual, tel: '', alerta: '', obs: 'Agendada en calendario de peluquería' };
+    clientas.push(nuevaC);
+    await DB_API.saveCliente(nuevaC);
+    finalCid = nuevaC.id;
+  } else if (finalCid) {
+    finalNom = clientas.find(c => c.id === finalCid)?.nombre || 'Clienta';
+  }
+
+  const formula = modoEstado === 'cobrado' ? compilarFormulaTexto() : '';
+  let metodoPago = valor($('v_pago')) || 'Efectivo';
+
+  if (modoEstado === 'cobrado' && $('v_pago_tipo').value === 'mixto') {
     const ef = $('v_pago_efectivo').value || 0;
     const tr = $('v_pago_transf').value || 0;
     metodoPago = `Mixto ($${ef} Efec + $${tr} Transf)`;
   }
 
-  const cSel = clientas.find(c => c.id === $('v_clienta').value);
   const nuevaVisita = {
     id: Date.now(),
-    cid: $('v_clienta').value,
-    clienta_nombre: cSel?.nombre || 'Clienta',
-    fecha: hoy(),
+    cid: finalCid,
+    clienta_nombre: finalNom,
+    fecha: fecha,
+    inicio: ini,
+    fin: fin,
+    inicioReal: modoEstado === 'cobrado' ? ini : '',
+    estado: modoEstado,
     servicio: servicioPeluqueriaActivo,
     formula: formula,
-    total: +$('v_total').value,
+    total: modoEstado === 'cobrado' ? (+$('v_total').value || 0) : 0,
     pago: metodoPago
   };
 
   visitas.push(nuevaVisita);
   guardarLocalDB();
   await DB_API.saveVisita(nuevaVisita);
-  syncGoogleSheetsVisita(nuevaVisita);
+  syncGoogleSheetsVisita(nuevaVisita, true);
 
-  toast('¡Atención y ficha registradas con éxito! ✔');
-  $('v_total').value = '';
-  $('f_productos').innerHTML = '';
-  $('v_pago_efectivo').value = '';
-  $('v_pago_transf').value = '';
+  toast(modoEstado === 'pendiente' ? '📅 Turno agendado en el Calendario de Yamina ✔' : '¡Atención y ficha registradas con éxito! ✔');
+  if ($('v_total')) $('v_total').value = '';
+  if ($('v_clienta_manual')) $('v_clienta_manual').value = '';
+  if ($('f_productos')) $('f_productos').innerHTML = '';
+  if ($('v_pago_efectivo')) $('v_pago_efectivo').value = '';
+  if ($('v_pago_transf')) $('v_pago_transf').value = '';
+  if ($('det_carga_directa_pelo')) $('det_carga_directa_pelo').removeAttribute('open');
+
+  calPeloFecha = fecha;
+  visitaActivaId = nuevaVisita.id;
   renderFormularioTecnico();
-  verHistorial();
+  prepararVisitaPelo();
   cargarInicio();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ---------- CALENDARIO DE PELUQUERÍA (YAMINA) & MODO SILLÓN EN VIVO ----------
+function calPeloMover(n) {
+  const x = new Date((calPeloFecha || hoy()) + 'T12:00:00');
+  x.setDate(x.getDate() + n);
+  calPeloFecha = iso(x);
+  calPeloRender();
+}
+
+function calPeloRender() {
+  if (!$('calPeloCont')) return;
+  if (!calPeloFecha) calPeloFecha = hoy();
+  const HORA_PX = 52, H_INI = 8, H_FIN = 22;
+  const horas = []; for (let h = H_INI; h < H_FIN; h++) horas.push(h);
+  const alto = horas.length * HORA_PX;
+
+  if ($('calPeloLbl')) {
+    $('calPeloLbl').textContent = (calPeloFecha === hoy() ? 'Hoy · ' : '') +
+      new Date(calPeloFecha + 'T12:00:00').toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'short' });
+  }
+
+  const dia = visitas
+    .filter(v => v.fecha === calPeloFecha)
+    .sort((a,b) => (a.inicio || '10:00') < (b.inicio || '10:00') ? -1 : 1);
+
+  if ($('cola_pelo_dia')) {
+    $('cola_pelo_dia').innerHTML = dia.length ? `
+      <div class="cola-dia-wrap">
+        ${dia.map(v => {
+          const cli = clientas.find(c => c.id === v.cid)?.nombre || v.clienta_nombre || 'Clienta';
+          const est = estadoDeVisita(v);
+          const iconoEst = est === 'en_sillon' ? '⏳' : (est === 'cobrado' ? '✔' : '🕒');
+          return `
+            <button type="button" class="turno-cola-btn ${visitaActivaId === v.id ? 'activo' : ''}" onclick="seleccionarVisitaPelo(${v.id})">
+              <b>${iconoEst} ${esc(cli)}</b>
+              <small>${esc(v.inicio || '10:00')} hs · ${esc(v.servicio)}</small>
+            </button>
+          `;
+        }).join('')}
+      </div>
+    ` : '';
+  }
+
+  const gutter = `<div class="cal-h"><div style="height:34px;border:0"></div>${horas.map(h => `<div>${String(h).padStart(2,'0')}:00</div>`).join('')}</div>`;
+
+  const bl = dia.map((v, idx) => {
+    const iniStr = v.inicio || String(Math.min(10 + idx * 2, 19)).padStart(2,'0') + ':00';
+    const finStr = v.fin || sumarMin(iniStr, 90);
+    const s = minutos(iniStr), e = Math.max(minutos(finStr), s + 45);
+    const top = (s - H_INI*60) / 60 * HORA_PX;
+    const h = Math.max((e - s) / 60 * HORA_PX, 32);
+    const clienta = clientas.find(c => c.id === v.cid)?.nombre || v.clienta_nombre || 'Clienta';
+    const est = estadoDeVisita(v);
+    const tagEst = est === 'en_sillon' ? '⏳ EN SILLÓN' : (est === 'cobrado' ? '✔' : '🕒');
+    const bgCol = est === 'en_sillon' ? '#8a384f' : (est === 'cobrado' ? '#161416' : '#c46880');
+    const bordeActivo = visitaActivaId === v.id ? 'outline: 3px solid #161416; z-index:5;' : '';
+
+    return `
+      <div class="bloque" onclick="seleccionarVisitaPelo(${v.id})" title="Tocá para atender o ver fórmula"
+        style="top:${top}px; height:${h}px; background-color:${bgCol}; ${bordeActivo}">
+        <b>${tagEst} ${esc(clienta)} · ${esc(v.servicio)}</b>
+        <span>${iniStr}–${finStr}${est === 'cobrado' && v.total ? ' · ' + money(v.total) : ''}${v.formula ? ' · 🧪 ' + esc(v.formula) : ''}</span>
+      </div>
+    `;
+  }).join('');
+
+  $('calPeloCont').innerHTML = `
+    <div class="cal-wrap">
+      ${gutter}
+      <div class="cal-col">
+        <div class="cal-tit" style="background-color:#f8dfe4; color:#161416;">💇‍♀️ Sillón Yamina · Agenda de Peluquería & Color</div>
+        <div class="cal-grid" style="height:${alto}px">${horas.map(() => '<div class="cal-hora"></div>').join('')}${bl}</div>
+      </div>
+    </div>
+    ${dia.length ? '' : '<div class="vacio" style="margin-top:8px;">No hay turnos de peluquería agendados en esta fecha</div>'}
+  `;
+}
+
+function seleccionarVisitaPelo(id) {
+  const v = visitas.find(x => x.id === Number(id));
+  if (!v) return;
+  visitaActivaId = v.id;
+  servicioSillonActivo = v.servicio || 'Tintura';
+  renderPanelAtencionPelo();
+  calPeloRender();
+  const el = $('panel_atencion_pelo');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cerrarPanelAtencionPelo() {
+  visitaActivaId = null;
+  renderPanelAtencionPelo();
+  calPeloRender();
+}
+
+function renderPanelAtencionPelo() {
+  const cont = $('panel_atencion_pelo');
+  if (!cont) return;
+
+  const v = visitas.find(x => x.id === Number(visitaActivaId));
+  if (!v) {
+    cont.innerHTML = '';
+    return;
+  }
+
+  const cObj = clientas.find(c => c.id === v.cid);
+  const clientaNombre = cObj?.nombre || v.clienta_nombre || 'Clienta';
+  const est = estadoDeVisita(v);
+
+  // Buscar última fórmula histórica de esta clienta
+  const previas = visitas
+    .filter(x => x.cid && x.cid === v.cid && x.id !== v.id && x.formula)
+    .sort((a,b) => a.fecha < b.fecha ? 1 : -1);
+  const ultFormula = previas[0];
+
+  let pillHtml = `<span class="estado-pill pendiente">🕒 Turno Agendado · En Espera</span>`;
+  if (est === 'en_sillon') pillHtml = `<span class="estado-pill en-mesa">⏳ Atendiendo en Sillón (desde ${esc(v.inicioReal || v.inicio || '10:00')})</span>`;
+  if (est === 'cobrado') pillHtml = `<span class="estado-pill cobrado">✔ Ficha Guardada y Cobrada</span>`;
+
+  cont.innerHTML = `
+    <div class="atencion-card">
+      <div class="atencion-hero">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+          ${pillHtml}
+          <button class="mini" style="background:rgba(255,255,255,0.16) !important; border:0; color:#fff !important; padding:4px 10px;" onclick="cerrarPanelAtencionPelo()">✕ Cerrar</button>
+        </div>
+
+        <div class="atencion-clienta-nombre">${esc(clientaNombre)}</div>
+
+        <div style="font-size:13px; opacity:0.92; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:6px;">
+          <span>💇‍♀️ Yamina · <strong>${esc(v.servicio)}</strong> · 🕒 ${esc(v.inicio || '10:00')} a ${esc(v.fin || '11:30')} hs</span>
+          <div style="display:flex; gap:6px;">
+            <button class="mini" style="background:rgba(255,255,255,0.18) !important; border:0; color:#fff !important; padding:4px 10px;" onclick="agendarEnCalendarioNativo(${v.id})">📅 Calendario Celu</button>
+            ${cObj?.tel ? `<button class="mini excel-btn" style="padding:4px 10px;" onclick="abrirWppClienta('${esc(cObj.tel)}', '${esc(clientaNombre)}')">💬 WhatsApp</button>` : ''}
+          </div>
+        </div>
+      </div>
+
+      ${cObj?.alerta ? `
+        <div class="alerta-box" style="margin-bottom:12px;">
+          <span>⚠️</span>
+          <div><strong>Alerta Capilar:</strong> ${esc(cObj.alerta)}</div>
+        </div>
+      ` : ''}
+
+      ${ultFormula ? `
+        <div style="background:var(--p-rose-soft); border:1px dashed var(--p-rose); border-radius:16px; padding:12px 14px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+            <small style="font-weight:800; color:var(--p-rose-deep); text-transform:uppercase; font-size:10.5px;">🧪 Última fórmula de ${esc(clientaNombre)} (${esc(ultFormula.fecha)})</small>
+            ${est === 'en_sillon' ? `<button type="button" class="mini noir-btn" style="padding:4px 10px; font-size:11px;" onclick="usarFormulaEnSillon('${esc(ultFormula.formula)}')">🔄 Repetir esta fórmula</button>` : ''}
+          </div>
+          <div style="font-size:12.5px; color:var(--txt); font-weight:600; margin-top:4px;">${esc(ultFormula.formula)}</div>
+        </div>
+      ` : ''}
+
+      ${est === 'pendiente' ? `
+        <div style="text-align:center; padding:4px 0 8px;">
+          <p style="font-size:13px; color:var(--txt-sec); margin:0 0 12px;">
+            Cuando <strong>${esc(clientaNombre)}</strong> pase al sillón, tocá el botón para iniciar la atención y cargar su fórmula:
+          </p>
+          <button class="btn-iniciar-mesa" onclick="iniciarAtencionPelo(${v.id})">
+            ▶️ INICIAR ATENCIÓN EN SILLÓN
+          </button>
+          <div style="display:flex; gap:8px; margin-top:10px;">
+            <button class="mini btn-sec" style="flex:1; padding:10px;" onclick="pasarACobroPelo(${v.id})">🧪 Cargar Fórmula y Cobrar</button>
+            <button class="mini danger" style="padding:10px 14px;" onclick="eliminarVisita(${v.id})">🗑️ Cancelar turno</button>
+          </div>
+        </div>
+      ` : ''}
+
+      ${est === 'en_sillon' ? `
+        <div>
+          <label style="margin-top:0;">Trabajo Realizado</label>
+          <div class="chips" id="sillon_serv_chips"></div>
+
+          <div id="sillon_tecnica_dinamica"></div>
+
+          <label>✍️ Resumen / Ajuste Manual de Fórmula (opcional)</label>
+          <input id="sillon_formula_manual" value="${esc(v.formula || '')}" placeholder="Si repetiste fórmula o querés agregar una nota rápida aparece acá...">
+
+          <div style="margin-top:14px; border-top:1px dashed var(--p-rose-border); padding-top:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label style="margin:0;">🛍️ Venta de Productos (opcional)</label>
+              <button type="button" class="mini" onclick="agregarProductoVenta('', '', 'sillon_productos')">+ Agregar producto</button>
+            </div>
+            <div id="sillon_productos" style="margin-top:8px;"></div>
+          </div>
+
+          <div style="margin-top:14px; border-top:1px solid var(--border); padding-top:12px;">
+            <label style="margin-top:0; font-size:12px; color:var(--p);">💵 Monto Total a Cobrar ($)</label>
+            <input id="sillon_total" type="number" value="${v.total || ''}" placeholder="Ej: 38000" style="font-size:18px; font-weight:800; background:#fff !important; border-color:var(--p) !important;">
+
+            <label>Modalidad de Pago</label>
+            <select id="sillon_pago_tipo" onchange="togglePagoMixtoSillon()">
+              <option value="simple">Pago Simple (un solo medio)</option>
+              <option value="mixto">Pago Mixto (Efectivo + Transferencia)</option>
+            </select>
+
+            <div id="sillon_caja_simple" style="margin-top:8px;">
+              <div class="chips" id="sillon_pago_chips"></div>
+            </div>
+
+            <div id="sillon_caja_mixto" style="display:none; margin-top:10px; background:var(--p-rose-soft); border:1px solid var(--p-rose-border); border-radius:16px; padding:12px;">
+              <div class="row2">
+                <div>
+                  <label style="margin-top:0;">Efectivo ($)</label>
+                  <input id="sillon_pago_efec" type="number" placeholder="Ej: 20000" style="background:#fff !important;">
+                </div>
+                <div>
+                  <label style="margin-top:0;">Transferencia ($)</label>
+                  <input id="sillon_pago_transf" type="number" placeholder="Ej: 18000" style="background:#fff !important;">
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-finalizar-mesa" onclick="finalizarYCobrarPelo(${v.id})">
+              ✨ FINALIZAR ATENCIÓN, GUARDAR FICHA Y COBRAR
+            </button>
+          </div>
+        </div>
+      ` : ''}
+
+      ${est === 'cobrado' ? `
+        <div>
+          <div style="background:var(--g-bg); border:1px solid var(--g-border); border-radius:16px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <span style="font-size:11px; text-transform:uppercase; font-weight:800; color:var(--g); display:block;">Total Cobrado (100% Yamina)</span>
+              <strong style="font-family:var(--font-serif); font-size:24px; color:var(--g);">${money(v.total)}</strong>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:12px; font-weight:700; color:var(--txt-sec); display:block;">Medio de Pago</span>
+              <strong style="font-size:14px; color:var(--txt);">${esc(v.pago)}</strong>
+            </div>
+          </div>
+          <div style="margin-top:10px; font-size:13px; color:var(--txt); background:var(--p-rose-soft); border:1px solid var(--p-rose-border); padding:11px 14px; border-radius:14px;">
+            <strong>🧪 Fórmula aplicada:</strong> ${esc(v.formula || 'Sin fórmula especificada')}
+          </div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button class="mini btn-sec" style="flex:1; padding:10px;" onclick="reabrirVisitaPelo(${v.id})">✏️ Modificar Fórmula / Cobro</button>
+            <button class="mini danger" style="padding:10px 14px;" onclick="eliminarVisita(${v.id})">🗑️ Borrar</button>
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  if ($('sillon_serv_chips')) {
+    const SERVICIOS_DOCX = [
+      'Tintura', 'Mechas / Reflejos', 'Hidratación / Botox',
+      'Alisado / Keratina', 'Corte / Split Ender', 'Peinado'
+    ];
+    chips($('sillon_serv_chips'), SERVICIOS_DOCX.map(s => [s, s]), s => {
+      servicioSillonActivo = s;
+      renderFormularioTecnico('sillon_tecnica_dinamica', s, 'sil_');
+    });
+    elegir($('sillon_serv_chips'), servicioSillonActivo);
+    renderFormularioTecnico('sillon_tecnica_dinamica', servicioSillonActivo, 'sil_');
+  }
+
+  if ($('sillon_pago_chips')) {
+    chips($('sillon_pago_chips'), PAGOS);
+    elegir($('sillon_pago_chips'), v.pago && !v.pago.startsWith('Mixto') ? v.pago : 'Efectivo');
+  }
+}
+
+function usarFormulaEnSillon(formulaStr) {
+  if ($('sillon_formula_manual')) {
+    $('sillon_formula_manual').value = formulaStr;
+    toast('🔄 Fórmula anterior copiada en la ficha ✔');
+  }
+}
+
+function togglePagoMixtoSillon() {
+  const tipo = $('sillon_pago_tipo')?.value;
+  if ($('sillon_caja_simple')) $('sillon_caja_simple').style.display = tipo === 'simple' ? 'block' : 'none';
+  if ($('sillon_caja_mixto')) $('sillon_caja_mixto').style.display = tipo === 'mixto' ? 'block' : 'none';
+}
+
+async function iniciarAtencionPelo(id) {
+  const v = visitas.find(x => x.id === Number(id));
+  if (!v) return;
+  v.estado = 'en_sillon';
+  v.inicioReal = horaAhoraTexto();
+  guardarLocalDB();
+  await DB_API.saveVisita(v);
+  toast('▶️ ¡Atención iniciada en el sillón de Yamina!');
+  renderPanelAtencionPelo();
+  calPeloRender();
+  cargarInicio();
+}
+
+async function pasarACobroPelo(id) {
+  const v = visitas.find(x => x.id === Number(id));
+  if (!v) return;
+  v.estado = 'en_sillon';
+  v.inicioReal = v.inicioReal || v.inicio || '10:00';
+  guardarLocalDB();
+  await DB_API.saveVisita(v);
+  renderPanelAtencionPelo();
+  calPeloRender();
+}
+
+async function finalizarYCobrarPelo(id) {
+  const v = visitas.find(x => x.id === Number(id));
+  if (!v) return;
+
+  const montoFinal = Number($('sillon_total')?.value || 0);
+  if (!montoFinal || montoFinal <= 0) {
+    $('sillon_total')?.focus();
+    return toast('Ingresá el monto total a cobrar', true);
+  }
+
+  const fManual = ($('sillon_formula_manual')?.value || '').trim();
+  const fCompilada = compilarFormulaTexto('sil_', servicioSillonActivo, 'sillon_productos');
+  const formulaFinal = fManual ? (fCompilada && !fManual.includes(fCompilada) ? `${fManual} — ${fCompilada}` : fManual) : fCompilada;
+
+  let pagoFinal = valor($('sillon_pago_chips')) || 'Efectivo';
+  if ($('sillon_pago_tipo')?.value === 'mixto') {
+    const ef = Number($('sillon_pago_efec')?.value || 0);
+    const tr = Number($('sillon_pago_transf')?.value || 0);
+    pagoFinal = `Mixto ($${ef} Efec + $${tr} Transf)`;
+  }
+
+  v.servicio = servicioSillonActivo;
+  v.formula = formulaFinal;
+  v.total = montoFinal;
+  v.pago = pagoFinal;
+  v.estado = 'cobrado';
+
+  guardarLocalDB();
+  await DB_API.saveVisita(v);
+  syncGoogleSheetsVisita(v, false);
+
+  toast('✨ ¡Atención y fórmula técnica guardadas con éxito!');
+  renderPanelAtencionPelo();
+  calPeloRender();
+  cargarInicio();
+}
+
+async function reabrirVisitaPelo(id) {
+  const v = visitas.find(x => x.id === Number(id));
+  if (!v) return;
+  v.estado = 'en_sillon';
+  guardarLocalDB();
+  await DB_API.saveVisita(v);
+  renderPanelAtencionPelo();
+  calPeloRender();
+  cargarInicio();
+}
+
+// Botón universal para guardar el turno en iPhone (iOS Calendar) o Google Calendar con 1 toque
+function agendarEnCalendarioNativo(id) {
+  const v = visitas.find(x => x.id === Number(id));
+  if (!v) return;
+  const cObj = clientas.find(c => c.id === v.cid);
+  const clientaNombre = cObj?.nombre || v.clienta_nombre || 'Clienta';
+  const fechaLimpia = (v.fecha || hoy()).replace(/-/g, '');
+  const iniLimpia = (v.inicio || '10:00').replace(':', '') + '00';
+  const finLimpia = (v.fin || '11:30').replace(':', '') + '00';
+
+  const titulo = `✂️ OLALÁ: ${clientaNombre} (${v.servicio})`;
+  const detalles = `Clienta: ${clientaNombre}${cObj?.tel ? ' - Tel: ' + cObj.tel : ''}${v.formula ? ' - Fórmula: ' + v.formula : ''}`;
+
+  const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titulo)}&dates=${fechaLimpia}T${iniLimpia}/${fechaLimpia}T${finLimpia}&details=${encodeURIComponent(detalles)}`;
+  window.open(gcalUrl, '_blank');
 }
 
 // ---------- REGISTRAR Y ATENDER TURNO UÑAS ----------
@@ -1186,11 +1631,13 @@ async function eliminarTurno(id) {
 }
 
 async function eliminarVisita(id) {
-  if (!confirm('¿Eliminar este registro de peluquería?')) return;
-  visitas = visitas.filter(v => v.id !== id);
+  if (!confirm('¿Eliminar este turno / registro de peluquería?')) return;
+  visitas = visitas.filter(v => v.id !== Number(id));
+  if (visitaActivaId === Number(id)) visitaActivaId = null;
   guardarLocalDB();
   await DB_API.deleteVisita(id);
-  toast('Atención eliminada');
+  toast('Registro eliminado');
+  prepararVisitaPelo();
   cargarInicio();
 }
 
@@ -1289,7 +1736,7 @@ function calRender() {
 // ---------- CAJA Y REPORTES (Yamina) ----------
 function cargarReporte() {
   const [a,b] = rango(repPeriodo);
-  const vs = visitas.filter(v => v.fecha >= a && v.fecha <= b);
+  const vs = visitas.filter(v => v.fecha >= a && v.fecha <= b && estadoDeVisita(v) === 'cobrado');
   const ts = turnos.filter(t => t.fecha >= a && t.fecha <= b && estadoDeTurno(t) === 'cobrado');
 
   const peluq = vs.reduce((s,v) => s + v.total, 0);
@@ -1480,15 +1927,24 @@ function descargarExcelClientas() {
   toast('👩 Directorio de clientas descargado a Excel');
 }
 
-async function syncGoogleSheetsVisita(visitaData) {
-  const url = localStorage.getItem('SALON_GOOGLE_SHEETS_URL');
+function obtenerUrlPuenteGoogle() {
+  return (typeof GOOGLE_BRIDGE_URL_FIJA !== 'undefined' && GOOGLE_BRIDGE_URL_FIJA)
+    ? GOOGLE_BRIDGE_URL_FIJA
+    : localStorage.getItem('SALON_GOOGLE_SHEETS_URL');
+}
+
+async function syncGoogleSheetsVisita(visitaData, soloCalendario = false) {
+  const url = obtenerUrlPuenteGoogle();
   if (!url) return;
 
   const c = clientas.find(x => x.id === visitaData.cid) || {};
   const payload = {
-    tipo: 'visita_pelo',
+    tipo: soloCalendario ? 'agendar_calendario_pelo' : 'visita_pelo',
+    agendarEnCalendario: true,
     fecha: visitaData.fecha,
-    clienta: c.nombre || 'Clienta',
+    inicio: visitaData.inicio || '10:00',
+    fin: visitaData.fin || '11:30',
+    clienta: c.nombre || visitaData.clienta_nombre || 'Clienta',
     telefono: c.tel || '',
     servicio: visitaData.servicio,
     formula: visitaData.formula,
@@ -1505,14 +1961,63 @@ async function syncGoogleSheetsVisita(visitaData) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    console.log('☁️ Respaldo enviado automáticamente a Google Sheets en Drive');
+    console.log('☁️ Sincronizado automáticamente con Google Drive / Calendar');
   } catch(e) {
-    console.warn('Error al enviar a Google Sheets:', e);
+    console.warn('Error al enviar al puente de Google:', e);
+  }
+}
+
+async function syncGoogleCalendarYamina() {
+  const url = obtenerUrlPuenteGoogle();
+  if (!url) return;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data && data.status === 'ok' && Array.isArray(data.eventos)) {
+      let huboNuevos = false;
+      for (const ev of data.eventos) {
+        const yaExiste = visitas.some(v =>
+          v.fecha === ev.fecha &&
+          (v.inicio || '10:00') === ev.inicio &&
+          (v.clienta_nombre || '').toLowerCase() === (ev.titulo || '').replace('✂️', '').split('·')[0].trim().toLowerCase()
+        );
+        if (!yaExiste && ev.fecha) {
+          const partesTit = (ev.titulo || 'Clienta').replace('✂️', '').split('·');
+          const nomCli = partesTit[0].trim() || 'Clienta Calendario';
+          const servCli = (partesTit[1] || 'Peluquería').trim();
+          const matchC = clientas.find(c => c.nombre.toLowerCase() === nomCli.toLowerCase());
+          const nuevaV = {
+            id: Date.now() + Math.floor(Math.random() * 1000),
+            cid: matchC ? matchC.id : null,
+            clienta_nombre: nomCli,
+            fecha: ev.fecha,
+            inicio: ev.inicio || '10:00',
+            fin: ev.fin || '11:00',
+            inicioReal: '',
+            estado: 'pendiente',
+            servicio: servCli,
+            formula: ev.descripcion || '',
+            total: 0,
+            pago: 'Efectivo'
+          };
+          visitas.push(nuevaV);
+          await DB_API.saveVisita(nuevaV);
+          huboNuevos = true;
+        }
+      }
+      if (huboNuevos) {
+        guardarLocalDB();
+        refrescarVistasActuales();
+      }
+    }
+  } catch (e) {
+    console.warn('No se pudo leer calendario remoto:', e);
   }
 }
 
 async function syncGoogleSheetsTurno(turnoData) {
-  const url = localStorage.getItem('SALON_GOOGLE_SHEETS_URL');
+  const url = obtenerUrlPuenteGoogle();
   if (!url) return;
 
   const c = clientas.find(x => x.id === turnoData.cid) || {};
@@ -1587,12 +2092,16 @@ function init() {
   chips($('t_trab'), ['Semipermanente','Capping en acrílico','Soft gel','Poly gel','Retiro'].map(s => [s,s]));
   elegir($('t_trab'), 'Semipermanente');
 
+  chips($('v_dur'), [['30','30 min'],['60','1 h'],['90','1 h 30'],['120','2 h'],['180','3 h']], m => actualizarFinPelo(+m));
+  elegir($('v_dur'), '90');
+
   chips($('t_dur'), [['30','30 min'],['45','45 min'],['60','1 h'],['90','1 h 30']], m => actualizarFin(+m));
   elegir($('t_dur'), '60');
 
   chips($('t_manic'), [['katya','💅 Katya'],['gisel','✨ Gisel']]);
   elegir($('t_manic'), 'katya');
 
+  if ($('v_inicio')) $('v_inicio').oninput = () => actualizarFinPelo(duracionPeloActual());
   $('t_inicio').oninput = () => actualizarFin(duracionActual());
   $('v_buscar').oninput = e => filtrarSelect(e.target.value);
   $('buscar').oninput = e => renderClientas(e.target.value);
@@ -1601,6 +2110,7 @@ function init() {
   renderFormularioTecnico();
   abrirSelectorUsuario();
   sincronizarConSupabase();
+  syncGoogleCalendarYamina();
 }
 
 window.addEventListener('DOMContentLoaded', init);

@@ -6,6 +6,9 @@
 const SUPABASE_URL = "https://wonjvkeqkbtjyydgfsik.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_eUm_IQCZe3ZTrRqPMf3ozg_MNilEPZ5";
 
+// URL fija opcional del Puente Google Drive + Google Calendar (cuando lo pasen se pega acá)
+const GOOGLE_BRIDGE_URL_FIJA = "";
+
 let supabaseClient = null;
 let isOnlineSupabase = false;
 
@@ -29,7 +32,7 @@ function initSupabase() {
 // Inicializar de entrada
 initSupabase();
 
-// Codificador/Decodificador de estado de turno compatible con columna 'pago'
+// Codificador/Decodificador de estado de turno de uñas compatible con columna 'pago'
 function decodificarPagoYEstado(rawPago, rawInicio) {
   const str = String(rawPago || 'Efectivo');
   if (str === 'PENDIENTE') {
@@ -46,6 +49,59 @@ function codificarPagoYEstado(t) {
   if (t.estado === 'pendiente') return 'PENDIENTE';
   if (t.estado === 'en_mesa') return 'EN_MESA|' + (t.inicioReal || t.inicio || '');
   return t.pago || 'Efectivo';
+}
+
+// Codificador/Decodificador de horario y estado de Peluquería (Yamina) compatible con 'visitas_pelo.pago'
+function decodificarVisitaPago(rawPago, idx = 0) {
+  const str = String(rawPago || 'Efectivo');
+  const hDefaultIni = String(Math.min(10 + (idx % 5) * 2, 19)).padStart(2, '0') + ':00';
+  const hDefaultFin = String(Math.min(11 + (idx % 5) * 2, 20)).padStart(2, '0') + ':00';
+
+  if (str.startsWith('PENDIENTE')) {
+    const p = str.split('|');
+    return {
+      estado: 'pendiente',
+      pago: 'Efectivo',
+      inicio: p[1] || '10:00',
+      fin: p[2] || '11:00',
+      inicioReal: ''
+    };
+  }
+  if (str.startsWith('EN_SILLON')) {
+    const p = str.split('|');
+    return {
+      estado: 'en_sillon',
+      pago: 'Efectivo',
+      inicio: p[1] || '10:00',
+      fin: p[2] || '11:00',
+      inicioReal: p[3] || p[1] || '10:00'
+    };
+  }
+  if (str.includes('|')) {
+    const p = str.split('|');
+    return {
+      estado: 'cobrado',
+      pago: p[0] || 'Efectivo',
+      inicio: p[1] || hDefaultIni,
+      fin: p[2] || hDefaultFin,
+      inicioReal: p[1] || hDefaultIni
+    };
+  }
+  return {
+    estado: 'cobrado',
+    pago: str,
+    inicio: hDefaultIni,
+    fin: hDefaultFin,
+    inicioReal: hDefaultIni
+  };
+}
+
+function codificarVisitaPago(v) {
+  const ini = v.inicio || '10:00';
+  const fin = v.fin || '11:00';
+  if (v.estado === 'pendiente') return `PENDIENTE|${ini}|${fin}`;
+  if (v.estado === 'en_sillon') return `EN_SILLON|${ini}|${fin}|${v.inicioReal || ini}`;
+  return `${v.pago || 'Efectivo'}|${ini}|${fin}`;
 }
 
 // API Unificada de Supabase con fallback local transparente
@@ -94,21 +150,28 @@ const DB_API = {
     }
   },
 
-  // VISITAS PELUQUERÍA (Yamina)
+  // VISITAS Y TURNOS DE PELUQUERÍA (Yamina)
   async getVisitas() {
     if (this.isOnline()) {
       const { data, error } = await supabaseClient.from('visitas_pelo').select('*').order('fecha', { ascending: false });
       if (!error && data) {
-        return data.map(v => ({
-          id: Number(v.id),
-          cid: v.cliente_id,
-          clienta_nombre: v.cliente_nombre || '',
-          fecha: v.fecha,
-          servicio: v.servicio,
-          formula: v.formula || '',
-          total: Number(v.total || 0),
-          pago: v.pago || 'Efectivo'
-        }));
+        return data.map((v, idx) => {
+          const info = decodificarVisitaPago(v.pago, idx);
+          return {
+            id: Number(v.id),
+            cid: v.cliente_id,
+            clienta_nombre: v.cliente_nombre || '',
+            fecha: v.fecha,
+            inicio: info.inicio,
+            fin: info.fin,
+            inicioReal: info.inicioReal,
+            estado: info.estado,
+            servicio: v.servicio,
+            formula: v.formula || '',
+            total: Number(v.total || 0),
+            pago: info.pago
+          };
+        });
       }
       console.warn('Error leyendo visitas en Supabase:', error);
     }
@@ -119,13 +182,13 @@ const DB_API = {
     if (this.isOnline()) {
       const payload = {
         id: v.id,
-        cliente_id: v.cid,
+        cliente_id: v.cid || null,
         cliente_nombre: v.clienta_nombre || '',
         fecha: v.fecha,
         servicio: v.servicio,
-        formula: v.formula,
-        total: v.total,
-        pago: v.pago
+        formula: v.formula || '',
+        total: Number(v.total || 0),
+        pago: codificarVisitaPago(v)
       };
       const { error } = await supabaseClient.from('visitas_pelo').upsert(payload);
       if (error) {
