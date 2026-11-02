@@ -992,13 +992,6 @@ function renderPanelAtencion() {
         </div>
       </div>
 
-      ${cObj?.alerta ? `
-        <div class="alerta-box" style="margin-bottom:14px;">
-          <span>⚠️</span>
-          <div><strong>Nota de la clienta:</strong> ${esc(cObj.alerta)}</div>
-        </div>
-      ` : ''}
-
       ${est === 'pendiente' ? `
         <div style="text-align:center; padding:4px 0 8px;">
           <p style="font-size:13px; color:var(--txt-sec); margin:0 0 12px;">
