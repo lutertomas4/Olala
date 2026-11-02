@@ -152,6 +152,23 @@ function refrescarVistasActuales() {
 
 let U = null, periodo = 'hoy', repPeriodo = 'hoy', calFecha = null, pinUsuarioSeleccionado = null;
 let servicioPeluqueriaActivo = 'Tintura';
+let turnoActivoId = null;
+
+function estadoDeTurno(t) {
+  if (!t) return 'pendiente';
+  if (t.estado) return t.estado;
+  const p = String(t.pago || '');
+  if (p === 'PENDIENTE') return 'pendiente';
+  if (p.startsWith('EN_MESA')) return 'en_mesa';
+  return 'cobrado';
+}
+
+function badgeEstadoTurno(t) {
+  const est = estadoDeTurno(t);
+  if (est === 'pendiente') return `<span class="estado-pill pendiente">🕒 En espera</span>`;
+  if (est === 'en_mesa') return `<span class="estado-pill en-mesa">⏳ En mesa (${esc(t.inicioReal || t.inicio)})</span>`;
+  return `<span class="estado-pill cobrado">✔ Cobrado</span>`;
+}
 
 const TABS = {
   duena: [
@@ -220,10 +237,10 @@ function iniciarSesion(key) {
 
   const banner = $('banner-modo');
   if (U.rol === 'duena') {
-    banner.innerHTML = `<div>✨ <strong>Atelier Yamina:</strong> Peluquería (100% tuya) y control de <strong>rendiciones de manicuría (40% salón)</strong>.</div>`;
+    banner.innerHTML = `<div>✨ <strong>Atelier Yamina:</strong> Gestión de historia clínica capilar, agenda de uñas y caja general.</div>`;
     $('t_manic_box').style.display = 'block';
   } else {
-    banner.innerHTML = `<div>💅 <strong>Espacio ${U.nombre}:</strong> Registrá tus turnos cobrados. Ves <strong>tu 60% neto</strong> y el <strong>40% para rendir a Yamina</strong>.</div>`;
+    banner.innerHTML = `<div>💅 <strong>Espacio ${U.nombre}:</strong> Tocá el turno de tu clienta para <strong>iniciar la atención</strong>, sumar extras y <strong>finalizar el cobro</strong>.</div>`;
     $('t_manic_box').style.display = 'none';
   }
 
@@ -303,12 +320,14 @@ function cargarInicio() {
     const peluq = vs.reduce((s,v) => s + v.total, 0);
     const comisionesACobrar = ['katya', 'gisel'].map(k => {
       const p = PERSONAS[k];
-      const misT = ts.filter(t => t.mId === k);
+      const misT = ts.filter(t => t.mId === k && estadoDeTurno(t) === 'cobrado');
+      const misPend = ts.filter(t => t.mId === k && estadoDeTurno(t) !== 'cobrado');
       const gen = misT.reduce((s,t) => s + t.monto, 0);
       return {
         key: k,
         nombre: p.nombre,
         turnos: misT.length,
+        pendientes: misPend.length,
         totalCobradoPorElla: gen,
         debeEntregarAYamina: comisionDuena(gen),
         suGanancia: gananciaChica(gen)
@@ -316,22 +335,23 @@ function cargarInicio() {
     });
 
     const totalComisionesYamina = comisionesACobrar.reduce((s,c) => s + c.debeEntregarAYamina, 0);
+    const totalTurnosCobrados = comisionesACobrar.reduce((s,c) => s + c.turnos, 0);
 
     $('inicioCont').innerHTML = `
       <div class="kpis">
         <div class="kpi rose"><small>Peluquería (100% tuya)</small><big>${money(peluq)}</big><small>${vs.length} atenciones</small></div>
-        <div class="kpi verde"><small>A cobrar uñas (40%)</small><big>${money(totalComisionesYamina)}</big><small>${ts.length} turnos</small></div>
+        <div class="kpi verde"><small>A cobrar uñas (40%)</small><big>${money(totalComisionesYamina)}</big><small>${totalTurnosCobrados} turnos cobrados</small></div>
         <div class="kpi noir"><small>Tu Ganancia Neta</small><big>${money(peluq + totalComisionesYamina)}</big><small>Total salón</small></div>
       </div>
 
       <div class="card">
         <h3>💅 Rendiciones de Manicuría</h3>
-        <p class="section-sub">Las chicas cobran directo en mesa. Este es el detalle de lo que te corresponde recibir (40%):</p>
+        <p class="section-sub">Calculado sobre los turnos finalizados y cobrados por cada manicurista:</p>
         ${comisionesACobrar.map(m => `
           <div class="item">
             <div>
               <b>${esc(m.nombre)}</b>
-              <small>${m.turnos} turnos · Recaudó en mano ${money(m.totalCobradoPorElla)}</small>
+              <small>${m.turnos} cobrados${m.pendientes ? ` · ${m.pendientes} en espera/mesa` : ''} · Recaudó ${money(m.totalCobradoPorElla)}</small>
               <small style="color:var(--txt-sec);">Su 60% neto: <strong>${money(m.suGanancia)}</strong></small>
             </div>
             <div style="text-align:right">
@@ -368,15 +388,21 @@ function cargarInicio() {
         <h3>💅 Turnos de Nail Studio (${ts.length})</h3>
         ${ts.length ? ts.map(t => {
           const clienta = clientas.find(c => c.id === t.cid)?.nombre || t.clientaManual || 'Clienta';
+          const est = estadoDeTurno(t);
           return `
-            <div class="item">
+            <div class="item" style="cursor:pointer;" onclick="irA('turno'); seleccionarTurno(${t.id});">
               <div>
-                <b>${esc(PERSONAS[t.mId]?.nombre || t.mId)}</b> <span style="color:var(--txt-muted); font-size:12px;">atendió a</span> <strong>${esc(clienta)}</strong>
-                <small>${esc(t.trabajo)}${t.detalle ? ' · ' + esc(t.detalle) : ''} · ${esc(t.fecha)} (${t.inicio}–${t.fin}) · ${esc(t.pago)}</small>
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <b>${esc(PERSONAS[t.mId]?.nombre || t.mId)}</b>
+                  <span style="color:var(--txt-muted); font-size:12px;">con</span>
+                  <strong>${esc(clienta)}</strong>
+                  ${badgeEstadoTurno(t)}
+                </div>
+                <small>${esc(t.trabajo)}${t.detalle ? ' · ' + esc(t.detalle) : ''} · ${esc(t.fecha)} (${t.inicio}–${t.fin})${est === 'cobrado' ? ' · ' + esc(t.pago) : ''}</small>
               </div>
-              <div style="text-align:right; flex-shrink:0;">
-                <b style="font-family:var(--font-serif); font-size:16px;">${money(t.monto)}</b>
-                <small style="color:var(--g); font-weight:700;">Tu 40%: ${money(comisionDuena(t.monto))}</small>
+              <div style="text-align:right; flex-shrink:0;" onclick="event.stopPropagation();">
+                <b style="font-family:var(--font-serif); font-size:16px;">${est === 'cobrado' ? money(t.monto) : (t.monto ? money(t.monto) + ' (est.)' : 'A cobrar')}</b>
+                ${est === 'cobrado' ? `<small style="color:var(--g); font-weight:700;">Tu 40%: ${money(comisionDuena(t.monto))}</small>` : `<br><button class="mini" style="margin-top:4px; font-size:10.5px; padding:4px 9px;" onclick="irA('turno'); seleccionarTurno(${t.id});">Abrir ›</button>`}
                 <button class="mini danger" style="margin-top:5px; font-size:10.5px; padding:4px 9px;" onclick="eliminarTurno(${t.id})">Borrar</button>
               </div>
             </div>
@@ -385,9 +411,11 @@ function cargarInicio() {
       </div>
     `;
   } else {
-    // VISTA MANICURISTA (Katya o Gisel)
+    // VISTA PRIVADA DE CADA MANICURISTA (Katya o Gisel)
     const mios = ts.filter(t => t.mId === U.key);
-    const totCobradoEnMano = mios.reduce((s,t) => s + t.monto, 0);
+    const miosCobrados = mios.filter(t => estadoDeTurno(t) === 'cobrado');
+    const miosPendientes = mios.filter(t => estadoDeTurno(t) !== 'cobrado');
+    const totCobradoEnMano = miosCobrados.reduce((s,t) => s + t.monto, 0);
     const miPlata = gananciaChica(totCobradoEnMano);
     const deboEntregarAYamina = comisionDuena(totCobradoEnMano);
 
@@ -396,34 +424,56 @@ function cargarInicio() {
         <div class="kpi verde">
           <small>Tu ganancia limpia (60%)</small>
           <big>${money(miPlata)}</big>
-          <small>De ${money(totCobradoEnMano)} cobrados</small>
+          <small>De ${money(totCobradoEnMano)} cobrados (${miosCobrados.length} turnos)</small>
         </div>
         <div class="kpi noir">
           <small>A rendir a Yamina (40%)</small>
           <big>${money(deboEntregarAYamina)}</big>
-          <small>Comisión salón</small>
+          <small>Tu liquidación de salón</small>
         </div>
       </div>
 
+      ${miosPendientes.length ? `
+        <div class="card" style="background:var(--p-rose-soft) !important; border-color:var(--p-rose) !important;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <div>
+              <b style="font-size:14.5px;">⏳ Tenés ${miosPendientes.length} ${miosPendientes.length === 1 ? 'clienta pendiente' : 'clientas pendientes'} de finalizar/cobrar</b>
+              <small style="display:block; color:var(--txt-sec); margin-top:2px;">Tocá un turno para iniciar la atención o cerrar el cobro</small>
+            </div>
+            <button class="mini noir-btn" onclick="irA('turno'); seleccionarTurno(${miosPendientes[0].id});">Ir a Mesa ›</button>
+          </div>
+        </div>
+      ` : ''}
+
       <div class="card">
-        <h3>💅 Tus Turnos Registrados (${mios.length})</h3>
+        <h3>💅 Mis Turnos y Liquidación Personal (${mios.length})</h3>
         ${mios.length ? mios.map(t => {
           const clienta = clientas.find(c => c.id === t.cid)?.nombre || t.clientaManual || 'Clienta';
+          const est = estadoDeTurno(t);
           return `
-            <div class="item">
+            <div class="item" style="cursor:pointer;" onclick="irA('turno'); seleccionarTurno(${t.id});">
               <div>
-                <b>${esc(clienta)}</b> · <span style="color:var(--p-rose-deep); font-weight:700; font-size:13px;">${esc(t.trabajo)}</span>
-                <small>${esc(t.fecha)} (${t.inicio}–${t.fin}) · ${esc(t.pago)}</small>
-                ${t.detalle ? `<small style="color:var(--txt-sec);">✨ ${esc(t.detalle)}</small>` : ''}
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <b>${esc(clienta)}</b>
+                  ${badgeEstadoTurno(t)}
+                </div>
+                <small style="color:var(--p-rose-deep); font-weight:700;">${esc(t.trabajo)}${t.detalle ? ' · ' + esc(t.detalle) : ''}</small>
+                <small>${esc(t.fecha)} (${t.inicio}–${t.fin})${est === 'cobrado' ? ' · ' + esc(t.pago) : ''}</small>
               </div>
-              <div style="text-align:right; flex-shrink:0;">
-                <b style="font-family:var(--font-serif); font-size:16px;">${money(t.monto)}</b>
-                <small style="color:var(--g); font-weight:700;">Tu 60%: ${money(gananciaChica(t.monto))}</small>
+              <div style="text-align:right; flex-shrink:0;" onclick="event.stopPropagation();">
+                ${est === 'cobrado' ? `
+                  <b style="font-family:var(--font-serif); font-size:16px;">${money(t.monto)}</b>
+                  <small style="color:var(--g); font-weight:700;">Tu 60%: ${money(gananciaChica(t.monto))}</small>
+                  <small style="color:var(--txt-muted);">40% Salón: ${money(comisionDuena(t.monto))}</small>
+                ` : `
+                  <button class="mini noir-btn" onclick="irA('turno'); seleccionarTurno(${t.id});">▶️ Atender / Cobrar</button>
+                `}
+                <br>
                 <button class="mini danger" style="margin-top:5px; font-size:10.5px; padding:4px 9px;" onclick="eliminarTurno(${t.id})">Borrar</button>
               </div>
             </div>
           `;
-        }).join('') : '<div class="vacio">No registraste turnos en este período</div>'}
+        }).join('') : '<div class="vacio">No tenés turnos en este período</div>'}
       </div>
     `;
   }
@@ -803,33 +853,31 @@ async function guardarVisita() {
   cargarInicio();
 }
 
-// ---------- REGISTRAR TURNO UÑAS ----------
+// ---------- REGISTRAR Y ATENDER TURNO UÑAS ----------
 function prepararTurno() {
   $('t_clienta').innerHTML = '<option value="">— Elegir de lista (o escribir abajo) —</option>' + clientas.map(c => `<option value="${esc(c.id)}">${esc(c.nombre)}</option>`).join('');
   if (!$('t_fecha').value) $('t_fecha').value = hoy();
   if (!$('t_inicio').value) horaAhora();
   if (!valor($('t_dur'))) elegir($('t_dur'), '60');
   actualizarFin(duracionActual());
-  actualizarPreview();
   if (!calFecha) calFecha = hoy();
+  renderPanelAtencion();
   calRender();
 }
 
-function horaAhora() {
+function horaAhoraTexto() {
   const n = new Date();
-  $('t_inicio').value = String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+  return String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+}
+
+function horaAhora() {
+  $('t_inicio').value = horaAhoraTexto();
   actualizarFin(duracionActual());
 }
 function duracionActual() { return +valor($('t_dur')) || 60; }
 function actualizarFin(min) { if ($('t_inicio').value) $('t_fin').value = sumarMin($('t_inicio').value, min); }
 
-function actualizarPreview() {
-  const m = Number($('t_monto').value) || 0;
-  $('prev60').textContent = money(gananciaChica(m));
-  $('prev40').textContent = money(comisionDuena(m));
-}
-
-async function guardarTurno() {
+async function guardarTurno(modoEstado = 'pendiente') {
   const fecha = $('t_fecha').value;
   const ini = $('t_inicio').value;
   const fin = $('t_fin').value;
@@ -842,7 +890,7 @@ async function guardarTurno() {
 
   if (!fecha || !ini || !fin) return toast('Completá fecha y horario', true);
   if (!cid && !manual) return toast('Elegí o escribí la clienta', true);
-  if (!monto) return toast('Ingresá el monto del trabajo', true);
+  if (modoEstado === 'cobrado' && !monto) return toast('Ingresá el monto cobrado', true);
 
   let finalCid = cid;
   let finalNom = manual;
@@ -857,26 +905,286 @@ async function guardarTurno() {
 
   const nuevoTurno = {
     id: Date.now(),
-    mId, fecha, inicio: ini, fin, trabajo: trab, detalle: det, monto, pago: valor($('t_pago')), cid: finalCid, clientaManual: finalNom
+    mId,
+    fecha,
+    inicio: ini,
+    fin,
+    trabajo: trab,
+    detalle: det,
+    monto,
+    pago: valor($('t_pago')) || 'Efectivo',
+    estado: modoEstado,
+    inicioReal: modoEstado === 'cobrado' ? ini : '',
+    cid: finalCid,
+    clientaManual: finalNom
   };
 
   turnos.push(nuevoTurno);
   guardarLocalDB();
   await DB_API.saveTurno(nuevoTurno);
-  syncGoogleSheetsTurno(nuevoTurno);
+  if (modoEstado === 'cobrado') {
+    syncGoogleSheetsTurno(nuevoTurno);
+  }
 
-  toast('Turno agendado ✔');
+  toast(modoEstado === 'pendiente' ? '📅 Turno agendado en mesa ✔' : '✔ Turno registrado y cobrado');
   $('t_monto').value = '';
   $('t_detalle').value = '';
   $('t_clienta_manual').value = '';
-  actualizarPreview();
+  calFecha = fecha;
+  turnoActivoId = nuevoTurno.id;
   prepararTurno();
+  cargarInicio();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ---------- MODO MESA EN VIVO (INICIAR, SUMAR ADICIONALES Y COBRAR) ----------
+function seleccionarTurno(id) {
+  const t = turnos.find(x => x.id === Number(id));
+  if (!t) return;
+  if (U.rol !== 'duena' && t.mId !== U.key) {
+    return toast(`🔒 Turno de la agenda de ${PERSONAS[t.mId]?.nombre || t.mId}`);
+  }
+  turnoActivoId = t.id;
+  renderPanelAtencion();
+  calRender();
+  const el = $('panel_atencion_turno');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cerrarPanelAtencion() {
+  turnoActivoId = null;
+  renderPanelAtencion();
+  calRender();
+}
+
+function renderPanelAtencion() {
+  const cont = $('panel_atencion_turno');
+  if (!cont) return;
+
+  const t = turnos.find(x => x.id === Number(turnoActivoId));
+  if (!t || (U && U.rol !== 'duena' && t.mId !== U.key)) {
+    cont.innerHTML = '';
+    return;
+  }
+
+  const cObj = clientas.find(c => c.id === t.cid);
+  const clientaNombre = cObj?.nombre || t.clientaManual || 'Clienta';
+  const prof = PERSONAS[t.mId] || { nombre: t.mId, icono: '💅' };
+  const est = estadoDeTurno(t);
+
+  let pillHtml = `<span class="estado-pill pendiente">🕒 Turno Agendado · En Espera</span>`;
+  if (est === 'en_mesa') pillHtml = `<span class="estado-pill en-mesa">⏳ Atendiendo en Mesa Ahora (desde ${esc(t.inicioReal || t.inicio)})</span>`;
+  if (est === 'cobrado') pillHtml = `<span class="estado-pill cobrado">✔ Atención Finalizada y Cobrada</span>`;
+
+  cont.innerHTML = `
+    <div class="atencion-card">
+      <div class="atencion-hero">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+          ${pillHtml}
+          <button class="mini" style="background:rgba(255,255,255,0.16) !important; border:0; color:#fff !important; padding:4px 10px;" onclick="cerrarPanelAtencion()">✕ Cerrar</button>
+        </div>
+
+        <div class="atencion-clienta-nombre">${esc(clientaNombre)}</div>
+
+        <div style="font-size:13px; opacity:0.92; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:6px;">
+          <span>${prof.icono} ${esc(prof.nombre)} · <strong>${esc(t.trabajo)}</strong> · 🕒 ${esc(t.inicio)} a ${esc(t.fin)} hs</span>
+          ${cObj?.tel ? `<button class="mini excel-btn" style="padding:4px 10px;" onclick="abrirWppClienta('${esc(cObj.tel)}', '${esc(clientaNombre)}')">💬 WhatsApp</button>` : ''}
+        </div>
+      </div>
+
+      ${cObj?.alerta ? `
+        <div class="alerta-box" style="margin-bottom:14px;">
+          <span>⚠️</span>
+          <div><strong>Nota de la clienta:</strong> ${esc(cObj.alerta)}</div>
+        </div>
+      ` : ''}
+
+      ${est === 'pendiente' ? `
+        <div style="text-align:center; padding:4px 0 8px;">
+          <p style="font-size:13px; color:var(--txt-sec); margin:0 0 12px;">
+            Cuando <strong>${esc(clientaNombre)}</strong> se siente en la mesa, pulsá el botón para iniciar la atención:
+          </p>
+          <button class="btn-iniciar-mesa" onclick="iniciarAtencionTurno(${t.id})">
+            ▶️ INICIAR ATENCIÓN EN MESA
+          </button>
+          <div style="display:flex; gap:8px; margin-top:10px;">
+            <button class="mini btn-sec" style="flex:1; padding:10px;" onclick="pasarACobroTurno(${t.id})">💳 Ir directo a Cobrar</button>
+            <button class="mini danger" style="padding:10px 14px;" onclick="eliminarTurno(${t.id})">🗑️ Cancelar turno</button>
+          </div>
+        </div>
+      ` : ''}
+
+      ${est === 'en_mesa' ? `
+        <div>
+          <label style="margin-top:0;">➕ Sumar Adicionales Rápidos (1 toque)</label>
+          <div class="extras-grid">
+            <button type="button" class="extra-chip" onclick="agregarExtraTurno(${t.id}, 'Retiro', 3000)">+ Retiro ($3.000)</button>
+            <button type="button" class="extra-chip" onclick="agregarExtraTurno(${t.id}, 'Nail Art / Diseño', 2500)">+ Nail Art ($2.500)</button>
+            <button type="button" class="extra-chip" onclick="agregarExtraTurno(${t.id}, 'French / Baby Boomer', 2000)">+ French / Boomer ($2.000)</button>
+            <button type="button" class="extra-chip" onclick="agregarExtraTurno(${t.id}, 'Strass / Deco', 1500)">+ Strass ($1.500)</button>
+            <button type="button" class="extra-chip" onclick="agregarExtraTurno(${t.id}, 'Reconstrucción uña', 2000)">+ Uña rota ($2.000)</button>
+          </div>
+
+          <label>💅 Detalle de Color, Base y Trabajo Realizado</label>
+          <input id="at_detalle" value="${esc(t.detalle || '')}" placeholder="Ej: Base ruber vía láctea + French blanca...">
+
+          <div style="margin-top:14px; border-top:1px solid var(--border); padding-top:12px;">
+            <label style="margin-top:0; font-size:12px; color:var(--p);">💵 Total a Cobrar a ${esc(clientaNombre)} ($)</label>
+            <input id="at_monto" type="number" value="${t.monto || ''}" placeholder="Ingresá el monto final a cobrar (ej: 18000)" style="font-size:18px; font-weight:800; background:#fff !important; border-color:var(--p) !important;">
+
+            <label>Modalidad de Pago</label>
+            <select id="at_pago_tipo" onchange="togglePagoMixtoTurno()">
+              <option value="simple">Pago Simple (un solo medio)</option>
+              <option value="mixto">Pago Mixto (Efectivo + Transferencia)</option>
+            </select>
+
+            <div id="at_caja_simple" style="margin-top:8px;">
+              <div class="chips" id="at_pago_chips"></div>
+            </div>
+
+            <div id="at_caja_mixto" style="display:none; margin-top:10px; background:var(--p-rose-soft); border:1px solid var(--p-rose-border); border-radius:16px; padding:12px;">
+              <div class="row2">
+                <div>
+                  <label style="margin-top:0;">Efectivo ($)</label>
+                  <input id="at_pago_efec" type="number" placeholder="Ej: 10000" style="background:#fff !important;">
+                </div>
+                <div>
+                  <label style="margin-top:0;">Transferencia ($)</label>
+                  <input id="at_pago_transf" type="number" placeholder="Ej: 8000" style="background:#fff !important;">
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-finalizar-mesa" onclick="finalizarYCobrarTurno(${t.id})">
+              ✨ FINALIZAR ATENCIÓN Y COBRAR
+            </button>
+          </div>
+        </div>
+      ` : ''}
+
+      ${est === 'cobrado' ? `
+        <div>
+          <div style="background:var(--g-bg); border:1px solid var(--g-border); border-radius:16px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <span style="font-size:11px; text-transform:uppercase; font-weight:800; color:var(--g); display:block;">Total Cobrado</span>
+              <strong style="font-family:var(--font-serif); font-size:24px; color:var(--g);">${money(t.monto)}</strong>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:12px; font-weight:700; color:var(--txt-sec); display:block;">Medio de Pago</span>
+              <strong style="font-size:14px; color:var(--txt);">${esc(t.pago)}</strong>
+            </div>
+          </div>
+          ${t.detalle ? `<div style="margin-top:10px; font-size:13px; color:var(--txt-sec); background:var(--p-rose-soft); padding:10px 14px; border-radius:12px;"><strong>Trabajo y diseño:</strong> ${esc(t.detalle)}</div>` : ''}
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button class="mini btn-sec" style="flex:1; padding:10px;" onclick="reabrirTurno(${t.id})">✏️ Modificar / Editar Cobro</button>
+            <button class="mini danger" style="padding:10px 14px;" onclick="eliminarTurno(${t.id})">🗑️ Borrar</button>
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  if ($('at_pago_chips')) {
+    chips($('at_pago_chips'), PAGOS);
+    elegir($('at_pago_chips'), t.pago && !t.pago.startsWith('Mixto') ? t.pago : 'Efectivo');
+  }
+}
+
+async function iniciarAtencionTurno(id) {
+  const t = turnos.find(x => x.id === Number(id));
+  if (!t) return;
+  t.estado = 'en_mesa';
+  t.inicioReal = horaAhoraTexto();
+  guardarLocalDB();
+  await DB_API.saveTurno(t);
+  toast('▶️ ¡Atención iniciada en mesa!');
+  renderPanelAtencion();
+  calRender();
+  cargarInicio();
+}
+
+async function pasarACobroTurno(id) {
+  const t = turnos.find(x => x.id === Number(id));
+  if (!t) return;
+  t.estado = 'en_mesa';
+  t.inicioReal = t.inicioReal || t.inicio;
+  guardarLocalDB();
+  await DB_API.saveTurno(t);
+  renderPanelAtencion();
+  calRender();
+}
+
+function agregarExtraTurno(id, extraNom, extraPrecio) {
+  const t = turnos.find(x => x.id === Number(id));
+  if (!t) return;
+  const detInput = $('at_detalle');
+  const montoInput = $('at_monto');
+  if (detInput) {
+    const actual = detInput.value.trim();
+    detInput.value = actual ? `${actual} + ${extraNom}` : extraNom;
+    t.detalle = detInput.value;
+  }
+  if (montoInput) {
+    const actualMonto = Number(montoInput.value) || 0;
+    montoInput.value = actualMonto + Number(extraPrecio || 0);
+    t.monto = Number(montoInput.value);
+  }
+  toast(`➕ Se sumó ${extraNom}`);
+}
+
+function togglePagoMixtoTurno() {
+  const tipo = $('at_pago_tipo')?.value;
+  if ($('at_caja_simple')) $('at_caja_simple').style.display = tipo === 'simple' ? 'block' : 'none';
+  if ($('at_caja_mixto')) $('at_caja_mixto').style.display = tipo === 'mixto' ? 'block' : 'none';
+}
+
+async function finalizarYCobrarTurno(id) {
+  const t = turnos.find(x => x.id === Number(id));
+  if (!t) return;
+
+  const montoFinal = Number($('at_monto')?.value || 0);
+  if (!montoFinal || montoFinal <= 0) {
+    $('at_monto')?.focus();
+    return toast('Ingresá el monto total a cobrar', true);
+  }
+
+  let pagoFinal = valor($('at_pago_chips')) || 'Efectivo';
+  if ($('at_pago_tipo')?.value === 'mixto') {
+    const ef = Number($('at_pago_efec')?.value || 0);
+    const tr = Number($('at_pago_transf')?.value || 0);
+    pagoFinal = `Mixto ($${ef} Efec + $${tr} Transf)`;
+  }
+
+  t.detalle = ($('at_detalle')?.value || '').trim();
+  t.monto = montoFinal;
+  t.pago = pagoFinal;
+  t.estado = 'cobrado';
+
+  guardarLocalDB();
+  await DB_API.saveTurno(t);
+  syncGoogleSheetsTurno(t);
+
+  toast('✨ ¡Atención finalizada y cobrada con éxito!');
+  renderPanelAtencion();
+  calRender();
+  cargarInicio();
+}
+
+async function reabrirTurno(id) {
+  const t = turnos.find(x => x.id === Number(id));
+  if (!t) return;
+  t.estado = 'en_mesa';
+  guardarLocalDB();
+  await DB_API.saveTurno(t);
+  renderPanelAtencion();
+  calRender();
   cargarInicio();
 }
 
 async function eliminarTurno(id) {
   if (!confirm('¿Eliminar este turno de uñas?')) return;
-  turnos = turnos.filter(t => t.id !== id);
+  turnos = turnos.filter(t => t.id !== Number(id));
+  if (turnoActivoId === Number(id)) turnoActivoId = null;
   guardarLocalDB();
   await DB_API.deleteTurno(id);
   toast('Turno eliminado');
@@ -914,7 +1222,27 @@ function calRender() {
     { key: 'gisel', nombre: '✨ Gisel (Mesa 2)', bg: '#f6f2fb', col: '#644190' }
   ];
 
-  const dia = turnos.filter(t => t.fecha === calFecha);
+  const dia = turnos.filter(t => t.fecha === calFecha).sort((a,b) => a.inicio < b.inicio ? -1 : 1);
+
+  // Renderizar tira rápida de clientas del día para la usuaria activa
+  const misTurnosDia = U && U.rol !== 'duena' ? dia.filter(t => t.mId === U.key) : dia;
+  if ($('cola_turnos_dia')) {
+    $('cola_turnos_dia').innerHTML = misTurnosDia.length ? `
+      <div class="cola-dia-wrap">
+        ${misTurnosDia.map(t => {
+          const cli = clientas.find(c => c.id === t.cid)?.nombre || t.clientaManual || 'Clienta';
+          const est = estadoDeTurno(t);
+          const iconoEst = est === 'en_mesa' ? '⏳' : (est === 'cobrado' ? '✔' : '🕒');
+          return `
+            <button type="button" class="turno-cola-btn ${turnoActivoId === t.id ? 'activo' : ''}" onclick="seleccionarTurno(${t.id})">
+              <b>${iconoEst} ${esc(cli)}</b>
+              <small>${t.inicio} hs · ${esc(t.trabajo)}</small>
+            </button>
+          `;
+        }).join('')}
+      </div>
+    ` : '';
+  }
 
   // Alerta de superposición en mesa compartida
   let hayConflictoMesa = false;
@@ -938,15 +1266,18 @@ function calRender() {
     const bl = dia.filter(t => t.mId === m.key).map(t => {
       const s = minutos(t.inicio), e = minutos(t.fin) || s + 60;
       const top = (s - H_INI*60) / 60 * HORA_PX;
-      const h = Math.max((e - s) / 60 * HORA_PX, 24);
-      const verMonto = U.rol === 'duena' || t.mId === U.key;
+      const h = Math.max((e - s) / 60 * HORA_PX, 28);
+      const esMio = !U || U.rol === 'duena' || t.mId === U.key;
       const clienta = clientas.find(c => c.id === t.cid)?.nombre || t.clientaManual || 'Clienta';
+      const est = estadoDeTurno(t);
+      const tagEst = est === 'en_mesa' ? '⏳ EN MESA' : (est === 'cobrado' ? '✔' : '🕒');
+      const bordeActivo = turnoActivoId === t.id ? 'outline: 3px solid #161416; z-index:5;' : '';
 
       return `
-        <div class="bloque" onclick="eliminarTurno(${t.id})" title="Tocá para borrar"
-          style="top:${top}px; height:${h}px; background-color:${m.col};">
-          <b>${esc(clienta)}</b> (${esc(t.trabajo)})<br>
-          <span>${t.inicio}–${t.fin}${verMonto ? ' · ' + money(t.monto) : ''}</span>
+        <div class="bloque" onclick="seleccionarTurno(${t.id})" title="Tocá para abrir atención"
+          style="top:${top}px; height:${h}px; background-color:${m.col}; opacity:${esMio ? '1' : '0.68'}; ${bordeActivo}">
+          <b>${tagEst} ${esc(esMio ? clienta : 'Mesa reservada')}</b>
+          <span>${t.inicio}–${t.fin}${esMio ? ' · ' + esc(t.trabajo) : ''}</span>
         </div>
       `;
     }).join('');
@@ -959,14 +1290,14 @@ function calRender() {
     `;
   }).join('');
 
-  $('calCont').innerHTML = `<div class="cal-wrap">${gutter}${cols}</div>${dia.length ? '' : '<div class="vacio">No hay turnos este día</div>'}`;
+  $('calCont').innerHTML = `<div class="cal-wrap">${gutter}${cols}</div>${dia.length ? '' : '<div class="vacio">No hay turnos agendados en esta fecha</div>'}`;
 }
 
 // ---------- CAJA Y REPORTES (Yamina) ----------
 function cargarReporte() {
   const [a,b] = rango(repPeriodo);
   const vs = visitas.filter(v => v.fecha >= a && v.fecha <= b);
-  const ts = turnos.filter(t => t.fecha >= a && t.fecha <= b);
+  const ts = turnos.filter(t => t.fecha >= a && t.fecha <= b && estadoDeTurno(t) === 'cobrado');
 
   const peluq = vs.reduce((s,v) => s + v.total, 0);
   const manGen = ts.reduce((s,t) => s + t.monto, 0);
@@ -1269,7 +1600,6 @@ function init() {
   chips($('t_manic'), [['katya','💅 Katya'],['gisel','✨ Gisel']]);
   elegir($('t_manic'), 'katya');
 
-  $('t_monto').oninput = actualizarPreview;
   $('t_inicio').oninput = () => actualizarFin(duracionActual());
   $('v_buscar').oninput = e => filtrarSelect(e.target.value);
   $('buscar').oninput = e => renderClientas(e.target.value);

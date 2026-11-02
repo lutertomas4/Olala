@@ -233,18 +233,25 @@
       <div><strong>Mesa Compartida Ocupada:</strong> Hay dos turnos superpuestos en el mismo horario entre Katya y Gisel.</div>
     </div>
 
+    <!-- PANEL DE ATENCIÓN EN MESA (Se despliega al pulsar un turno) -->
+    <div id="panel_atencion_turno"></div>
+
     <div class="card">
       <div class="cal-top">
         <button class="mini" onclick="calMover(-1)">◀ Anterior</button>
         <strong id="calLbl" class="cal-date-title">Hoy</strong>
         <button class="mini" onclick="calMover(1)">Siguiente ▶</button>
       </div>
+      <p class="section-sub" style="text-align:center; margin-top:-6px; margin-bottom:10px;">
+        👆 Tocá el turno de tu clienta para <strong>Iniciar Atención</strong>, sumar extras o <strong>Finalizar y Cobrar</strong>
+      </p>
+      <div id="cola_turnos_dia" style="margin-bottom:12px;"></div>
       <div id="calCont"></div>
     </div>
 
     <div class="card">
-      <h3>💅 Registrar Turno de Manicuría</h3>
-      <p class="section-sub">Cálculo automático de comisión 60% Manicurista / 40% Salón</p>
+      <h3>💅 Agendar Nuevo Turno</h3>
+      <p class="section-sub">Reservá el horario en la mesa (podés confirmar el cobro al finalizar la atención)</p>
 
       <div class="row2">
         <div><label>Fecha</label><input id="t_fecha" type="date"></div>
@@ -271,34 +278,25 @@
       <select id="t_clienta"></select>
       <input id="t_clienta_manual" placeholder="O escribí el nombre si es clienta nueva..." style="margin-top:8px">
 
-      <label>Servicio de Uñas</label>
+      <label>Servicio Base</label>
       <div class="chips" id="t_trab"></div>
-      <input id="t_detalle" placeholder="Detalle de diseño (ej: French blanca, baby boomer, strass)..." style="margin-top:6px">
+      <input id="t_detalle" placeholder="Notas o diseño pedido (ej: French blanca, baby boomer, strass)..." style="margin-top:6px">
 
       <div class="row2">
         <div>
-          <label>Total Cobrado ($)</label>
-          <input id="t_monto" type="number" placeholder="Ej: 15000">
+          <label>Precio Base / Estimado ($)</label>
+          <input id="t_monto" type="number" placeholder="Opcional al agendar (ej: 15000)">
         </div>
         <div>
-          <label>Medio de Pago</label>
+          <label>Medio de Pago Previsto</label>
           <div class="chips" id="t_pago"></div>
         </div>
       </div>
 
-      <!-- Preview de comisiones 60/40 en vivo -->
-      <div id="previewComision" class="split-preview-box">
-        <div>
-          <span style="color:var(--txt-sec); font-size:11.5px; display:block;">Tu ganancia (60%)</span>
-          <strong id="prev60" style="color:var(--g); font-size:18px; font-family:var(--font-serif);">$0</strong>
-        </div>
-        <div style="text-align:right;">
-          <span style="color:var(--txt-sec); font-size:11.5px; display:block;">40% Salón (Yamina)</span>
-          <strong id="prev40" style="color:var(--p); font-size:18px; font-family:var(--font-serif);">$0</strong>
-        </div>
+      <div style="display:flex; flex-direction:column; gap:8px; margin-top:16px;">
+        <button class="btn" style="margin-top:0;" onclick="guardarTurno('pendiente')">📅 Agendar Turno (Dejar Pendiente de Atención)</button>
+        <button class="btn btn-sec" style="margin-top:0;" onclick="guardarTurno('cobrado')">✔ Cargar Directo como Ya Finalizado y Cobrado</button>
       </div>
-
-      <button class="btn" onclick="guardarTurno()">Agendar y Registrar Turno</button>
     </div>
   </section>
 

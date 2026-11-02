@@ -997,6 +997,186 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ==========================================================
+   MODO MESA EN VIVO / TARJETA DE ATENCIÓN DE UÑAS
+   ========================================================== */
+.atencion-card {
+  background: #ffffff !important;
+  border: 2px solid var(--p) !important;
+  border-radius: 26px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 18px 40px -10px rgba(22, 20, 22, 0.2);
+  animation: modalEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.atencion-hero {
+  background: linear-gradient(135deg, #161416 0%, #2f2328 100%) !important;
+  color: #ffffff !important;
+  border-radius: 20px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.atencion-hero * {
+  color: #ffffff !important;
+}
+
+.atencion-clienta-nombre {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 6px 0 4px;
+  letter-spacing: 0.2px;
+}
+
+.estado-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 4px 11px;
+  border-radius: 999px;
+}
+
+.estado-pill.pendiente {
+  background: #fdf2f5 !important;
+  color: #8a384f !important;
+}
+.estado-pill.pendiente * { color: #8a384f !important; }
+
+.estado-pill.en-mesa {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  animation: pulseSoft 1.8s infinite ease-in-out;
+}
+.estado-pill.en-mesa * { color: #92400e !important; }
+
+.estado-pill.cobrado {
+  background: #d1fae5 !important;
+  color: #065f46 !important;
+}
+.estado-pill.cobrado * { color: #065f46 !important; }
+
+@keyframes pulseSoft {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+.btn-iniciar-mesa {
+  width: 100%;
+  border: 0;
+  background: linear-gradient(135deg, #a83868 0%, #8a384f 100%) !important;
+  color: #ffffff !important;
+  padding: 16px;
+  border-radius: 18px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 24px -6px rgba(168, 56, 104, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.15s ease;
+}
+
+.btn-iniciar-mesa:active,
+.btn-finalizar-mesa:active {
+  transform: scale(0.98);
+}
+
+.btn-finalizar-mesa {
+  width: 100%;
+  border: 0;
+  background: var(--g) !important;
+  color: #ffffff !important;
+  padding: 16px;
+  border-radius: 18px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 24px -6px rgba(15, 110, 82, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+  transition: transform 0.15s ease;
+}
+
+.extras-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.extra-chip {
+  border: 1px dashed var(--p-rose) !important;
+  background: var(--p-rose-soft) !important;
+  color: var(--p-rose-deep) !important;
+  border-radius: 12px;
+  padding: 7px 11px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.extra-chip:active {
+  transform: scale(0.95);
+  background: var(--logo-pink) !important;
+}
+
+/* Tira de turnos rápidos arriba del calendario */
+.cola-dia-wrap {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.turno-cola-btn {
+  flex-shrink: 0;
+  border: 1px solid var(--p-rose-border) !important;
+  background: var(--p-rose-soft) !important;
+  color: var(--txt) !important;
+  border-radius: 16px;
+  padding: 9px 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  min-width: 145px;
+}
+
+.turno-cola-btn.activo {
+  border: 2px solid var(--p) !important;
+  background: #ffffff !important;
+  box-shadow: var(--shadow-sm);
+}
+
+.turno-cola-btn b {
+  display: block;
+  font-size: 13.5px;
+  color: var(--txt) !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.turno-cola-btn small {
+  display: block;
+  font-size: 11px;
+  color: var(--txt-muted) !important;
+  margin-top: 2px;
+}
+
+/* ==========================================================
    CALENDARIO DE MESA COMPARTIDA (KATYA & GISEL)
    ========================================================== */
 .cal-top {

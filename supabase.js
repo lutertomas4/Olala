@@ -29,6 +29,25 @@ function initSupabase() {
 // Inicializar de entrada
 initSupabase();
 
+// Codificador/Decodificador de estado de turno compatible con columna 'pago'
+function decodificarPagoYEstado(rawPago, rawInicio) {
+  const str = String(rawPago || 'Efectivo');
+  if (str === 'PENDIENTE') {
+    return { estado: 'pendiente', pago: 'Efectivo', inicioReal: '' };
+  }
+  if (str.startsWith('EN_MESA')) {
+    const partes = str.split('|');
+    return { estado: 'en_mesa', pago: 'Efectivo', inicioReal: partes[1] || rawInicio || '' };
+  }
+  return { estado: 'cobrado', pago: str, inicioReal: rawInicio || '' };
+}
+
+function codificarPagoYEstado(t) {
+  if (t.estado === 'pendiente') return 'PENDIENTE';
+  if (t.estado === 'en_mesa') return 'EN_MESA|' + (t.inicioReal || t.inicio || '');
+  return t.pago || 'Efectivo';
+}
+
 // API Unificada de Supabase con fallback local transparente
 const DB_API = {
   isOnline() {
@@ -108,11 +127,11 @@ const DB_API = {
         total: v.total,
         pago: v.pago
       };
-      const { error } = await supabaseClient.from('visitas_pelo').insert(payload);
+      const { error } = await supabaseClient.from('visitas_pelo').upsert(payload);
       if (error) {
         console.warn('Reintentando guardar visita sin cliente_id estricto:', error);
         payload.cliente_id = null;
-        await supabaseClient.from('visitas_pelo').insert(payload);
+        await supabaseClient.from('visitas_pelo').upsert(payload);
       }
     }
   },
@@ -128,19 +147,24 @@ const DB_API = {
     if (this.isOnline()) {
       const { data, error } = await supabaseClient.from('turnos_unas').select('*').order('fecha', { ascending: false });
       if (!error && data) {
-        return data.map(t => ({
-          id: Number(t.id),
-          mId: t.manicurista_id,
-          fecha: t.fecha,
-          inicio: t.hora_inicio,
-          fin: t.hora_fin,
-          cid: t.cliente_id,
-          clientaManual: t.cliente_nombre,
-          trabajo: t.trabajo,
-          detalle: t.detalle || '',
-          monto: Number(t.monto || 0),
-          pago: t.pago || 'Efectivo'
-        }));
+        return data.map(t => {
+          const infoEstado = decodificarPagoYEstado(t.pago, t.hora_inicio);
+          return {
+            id: Number(t.id),
+            mId: t.manicurista_id,
+            fecha: t.fecha,
+            inicio: t.hora_inicio,
+            fin: t.hora_fin,
+            cid: t.cliente_id,
+            clientaManual: t.cliente_nombre,
+            trabajo: t.trabajo,
+            detalle: t.detalle || '',
+            monto: Number(t.monto || 0),
+            pago: infoEstado.pago,
+            estado: infoEstado.estado,
+            inicioReal: infoEstado.inicioReal
+          };
+        });
       }
       console.warn('Error leyendo turnos en Supabase:', error);
     }
@@ -159,15 +183,15 @@ const DB_API = {
         cliente_id: t.cid || null,
         cliente_nombre: t.clientaManual || 'Clienta',
         trabajo: t.trabajo,
-        detalle: t.detalle,
-        monto: t.monto,
-        pago: t.pago
+        detalle: t.detalle || '',
+        monto: Number(t.monto || 0),
+        pago: codificarPagoYEstado(t)
       };
-      const { error } = await supabaseClient.from('turnos_unas').insert(payload);
+      const { error } = await supabaseClient.from('turnos_unas').upsert(payload);
       if (error) {
         console.warn('Reintentando guardar turno sin cliente_id estricto:', error);
         payload.cliente_id = null;
-        await supabaseClient.from('turnos_unas').insert(payload);
+        await supabaseClient.from('turnos_unas').upsert(payload);
       }
     }
   },
